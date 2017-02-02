@@ -362,8 +362,13 @@ pimcore.object.tags.objectBridge = Class.create(pimcore.object.tags.objects, {
                     iconCls: "pimcore_icon_search",
                     handler: this.openSearchEditor.bind(this)
                 }
-                // ,this.getCreateControl()
+                // ,
+
+
             ]);
+            if (this.fieldConfig.allowCreate) {
+                tbarItems.push(this.getCreateControl())
+            }
         }
 
         var plugins = [
@@ -485,15 +490,17 @@ pimcore.object.tags.objectBridge = Class.create(pimcore.object.tags.objects, {
         var menu = new Ext.menu.Menu();
         var column = grid.getColumnManager().getHeaderAtIndex(colIndex)
 
+        if (this.fieldConfig.allowDelete) {
+            menu.add(new Ext.menu.Item({
+                text: t('remove'),
+                iconCls: "pimcore_icon_delete",
+                handler: function (grid, rowIndex, item) {
+                    item.parentMenu.destroy();
+                    grid.getStore().removeAt(rowIndex);
+                }.bind(this, grid, rowIndex)
+            }));
+        }
 
-        menu.add(new Ext.menu.Item({
-            text: t('remove'),
-            iconCls: "pimcore_icon_delete",
-            handler: function (grid, rowIndex, item) {
-                item.parentMenu.destroy();
-                grid.getStore().removeAt(rowIndex);
-            }.bind(this, grid, rowIndex)
-        }));
 
         menu.add(new Ext.menu.Item({
             text: t('open'),

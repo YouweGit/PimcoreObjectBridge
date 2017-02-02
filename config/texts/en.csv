@@ -10,3 +10,5 @@ bridge_hidden_fields,Bridge hidden fields
 auto_resize,Auto resize columns
 new_line_split,New line split
 max_width_resize,Max width resize
+allow_delete,Allow create
+allow_delete,Allow delete

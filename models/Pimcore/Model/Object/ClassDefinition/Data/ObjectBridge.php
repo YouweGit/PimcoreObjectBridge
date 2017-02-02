@@ -16,7 +16,8 @@ use Pimcore\Model\Object\Concrete;
 /** @noinspection ClassOverridesFieldOfSuperClassInspection
  * We need to overwrite public properties because pimcore uses them for storing data
  */
-class ObjectBridge extends Model\Object\ClassDefinition\Data\ObjectsMetadata {
+class ObjectBridge extends Model\Object\ClassDefinition\Data\ObjectsMetadata
+{
 
     /**
      * @var string
@@ -77,6 +78,10 @@ class ObjectBridge extends Model\Object\ClassDefinition\Data\ObjectsMetadata {
 
     /** @var int */
     public $maxWidthResize;
+    /** @var  bool */
+    public $allowCreate;
+    /** @var bool */
+    public $allowDelete;
 
     /**
      * Converts sql data to object
@@ -86,7 +91,8 @@ class ObjectBridge extends Model\Object\ClassDefinition\Data\ObjectsMetadata {
      * @param mixed $params
      * @return array
      */
-    public function getDataFromResource($data, $object = null, $params = []) {
+    public function getDataFromResource($data, $object = null, $params = [])
+    {
         $objects = [];
         if (is_array($data) && count($data) > 0) {
             foreach ($data as $objectData) {
@@ -108,7 +114,8 @@ class ObjectBridge extends Model\Object\ClassDefinition\Data\ObjectsMetadata {
      * @param mixed $params
      * @return array
      */
-    public function getDataForResource($data, $object = null, $params = []) {
+    public function getDataForResource($data, $object = null, $params = [])
+    {
         $return = [];
 
         if (is_array($data) && count($data) > 0) {
@@ -144,7 +151,8 @@ class ObjectBridge extends Model\Object\ClassDefinition\Data\ObjectsMetadata {
      * @return null|string
      * @throws \Exception
      */
-    public function getDataForQueryResource($data, $object = null, $params = []) {
+    public function getDataForQueryResource($data, $object = null, $params = [])
+    {
 
         //return null when data is not set
         if (!$data) {
@@ -176,7 +184,8 @@ class ObjectBridge extends Model\Object\ClassDefinition\Data\ObjectsMetadata {
      * @return array
      * @throws \Exception
      */
-    public function getDataForEditmode($data, $object = null, $params = []) {
+    public function getDataForEditmode($data, $object = null, $params = [])
+    {
         $return = [];
         if (is_array($data) && count($data) > 0) {
 
@@ -191,16 +200,16 @@ class ObjectBridge extends Model\Object\ClassDefinition\Data\ObjectsMetadata {
 
                     $bridgeIdKey = ucfirst($bridgeClassDef->getName()) . '_id';
                     $columnData = [];
-                    $columnData[$bridgeIdKey] = $bridgeObject->getId();
+                    $columnData[ $bridgeIdKey ] = $bridgeObject->getId();
 
                     foreach ($bridgeVisibleFieldsArray as $bridgeVisibleField) {
                         $fd = $bridgeClassDef->getFieldDefinition($bridgeVisibleField);
                         $key = ucfirst($bridgeClassDef->getName()) . '_' . $bridgeVisibleField;
                         if ($fd instanceof Object\ClassDefinition\Data\Href) {
                             $valueObject = Service::getValueForObject($bridgeObject, $bridgeVisibleField);
-                            $columnData[$key] = $valueObject ? $valueObject->getId() : null;
+                            $columnData[ $key ] = $valueObject ? $valueObject->getId() : null;
                         } else {
-                            $columnData[$key] = Service::getValueForObject($bridgeObject, $bridgeVisibleField);
+                            $columnData[ $key ] = Service::getValueForObject($bridgeObject, $bridgeVisibleField);
                         }
                     }
 
@@ -212,7 +221,7 @@ class ObjectBridge extends Model\Object\ClassDefinition\Data\ObjectsMetadata {
                     }
 
                     $sourceIdKey = ucfirst($sourceClassDef->getName()) . '_id';
-                    $columnData[$sourceIdKey] = $sourceObject->getId();
+                    $columnData[ $sourceIdKey ] = $sourceObject->getId();
                     $sourceVisibleFieldsArray = $this->removeRestrictedKeys($this->getSourceVisibleFieldsAsArray());
 
                     foreach ($sourceVisibleFieldsArray as $sourceVisibleField) {
@@ -221,15 +230,16 @@ class ObjectBridge extends Model\Object\ClassDefinition\Data\ObjectsMetadata {
 
                         if ($fd instanceof Object\ClassDefinition\Data\Href) {
                             $valueObject = Service::getValueForObjectToString($sourceObject, $sourceVisibleField);
-                            $columnData[$key] = $valueObject;
+                            $columnData[ $key ] = $valueObject;
                         } else {
-                            $columnData[$key] = Service::getValueForObject($sourceObject, $sourceVisibleField);
+                            $columnData[ $key ] = Service::getValueForObject($sourceObject, $sourceVisibleField);
                         }
                     }
                     $return[] = $columnData;
                 }
             }
         }
+
         return $return;
     }
 
@@ -245,7 +255,8 @@ class ObjectBridge extends Model\Object\ClassDefinition\Data\ObjectsMetadata {
      * @throws \DI\NotFoundException
      * @throws \DI\DependencyException
      */
-    public function getDataFromEditmode($data, $object = null, $params = []) {
+    public function getDataFromEditmode($data, $object = null, $params = [])
+    {
 
         //if not set, return null
         if ($data === null || $data === false) {
@@ -263,7 +274,7 @@ class ObjectBridge extends Model\Object\ClassDefinition\Data\ObjectsMetadata {
             $idSourceFieldKey = $sourceClassDef->getName() . '_id';
 
             foreach ($data as $objectData) {
-                $sourceId = $objectData[$idSourceFieldKey];
+                $sourceId = $objectData[ $idSourceFieldKey ];
                 $bridgeObjectId = $this->getBridgeIdBySourceAndOwner($object, $bridgeClass, $sourceId);
 
 
@@ -297,10 +308,10 @@ class ObjectBridge extends Model\Object\ClassDefinition\Data\ObjectsMetadata {
                         $setter = 'set' . ucfirst($bridgeVisibleField);
 
                         if ($fd instanceof Object\ClassDefinition\Data\Href) {
-                            $valueObject = $this->getObjectForHref($fd, $objectData[$key]);
+                            $valueObject = $this->getObjectForHref($fd, $objectData[ $key ]);
                             $bridgeObject->$setter($valueObject);
                         } else {
-                            $bridgeObject->$setter($objectData[$key]);
+                            $bridgeObject->$setter($objectData[ $key ]);
                         }
 
                     }
@@ -327,14 +338,16 @@ class ObjectBridge extends Model\Object\ClassDefinition\Data\ObjectsMetadata {
      * @return mixed|null|ClassDefinition
      * @throws \Exception
      */
-    private function getSourceClassDefinition() {
+    private function getSourceClassDefinition()
+    {
         return ClassDefinition::getByName($this->sourceAllowedClassName);
     }
 
     /**
      * @return mixed|null|ClassDefinition
      */
-    private function getBridgeClassDefinition() {
+    private function getBridgeClassDefinition()
+    {
         return ClassDefinition::getByName($this->bridgeAllowedClassName);
     }
 
@@ -342,14 +355,15 @@ class ObjectBridge extends Model\Object\ClassDefinition\Data\ObjectsMetadata {
      * @param array $visibleFieldsArray
      * @return array
      */
-    private function removeRestrictedKeys($visibleFieldsArray) {
+    private function removeRestrictedKeys($visibleFieldsArray)
+    {
         // Id should be never edited and it will always be added by default
         if (($key = array_search('id', $visibleFieldsArray, true)) !== false) {
-            unset($visibleFieldsArray[$key]);
+            unset($visibleFieldsArray[ $key ]);
         }
         // Bridge object should be handled separately
         if (($key = array_search($this->bridgeField, $visibleFieldsArray, true)) !== false) {
-            unset($visibleFieldsArray[$key]);
+            unset($visibleFieldsArray[ $key ]);
         }
 
         return $visibleFieldsArray;
@@ -358,14 +372,16 @@ class ObjectBridge extends Model\Object\ClassDefinition\Data\ObjectsMetadata {
     /**
      * @return array
      */
-    public function getBridgeVisibleFieldsAsArray() {
+    public function getBridgeVisibleFieldsAsArray()
+    {
         return explode(',', $this->bridgeVisibleFields);
     }
 
     /**
      * @return string
      */
-    public function getBridgeField() {
+    public function getBridgeField()
+    {
         return $this->bridgeField;
     }
 
@@ -373,7 +389,8 @@ class ObjectBridge extends Model\Object\ClassDefinition\Data\ObjectsMetadata {
      * @param string $bridgeField
      * @return $this
      */
-    public function setBridgeField($bridgeField) {
+    public function setBridgeField($bridgeField)
+    {
         $this->bridgeField = $bridgeField;
 
         return $this;
@@ -382,7 +399,8 @@ class ObjectBridge extends Model\Object\ClassDefinition\Data\ObjectsMetadata {
     /**
      * @return array
      */
-    public function getSourceVisibleFieldsAsArray() {
+    public function getSourceVisibleFieldsAsArray()
+    {
         return explode(',', $this->sourceVisibleFields);
     }
 
@@ -390,14 +408,16 @@ class ObjectBridge extends Model\Object\ClassDefinition\Data\ObjectsMetadata {
     /**
      * @return string
      */
-    private function getSourceFullClassName() {
+    private function getSourceFullClassName()
+    {
         return '\\Pimcore\\Model\\Object\\' . ucfirst($this->sourceAllowedClassName);
     }
 
     /**
      * @return string
      */
-    private function getBridgeFullClassName() {
+    private function getBridgeFullClassName()
+    {
         return '\\Pimcore\\Model\\Object\\' . ucfirst($this->bridgeAllowedClassName);
     }
 
@@ -408,7 +428,8 @@ class ObjectBridge extends Model\Object\ClassDefinition\Data\ObjectsMetadata {
      * @return null|int
      * @throws \Zend_Db_Statement_Exception
      */
-    private function getBridgeIdBySourceAndOwner($object, $bridgeClass, $sourceId) {
+    private function getBridgeIdBySourceAndOwner($object, $bridgeClass, $sourceId)
+    {
         $db = Db::get();
         $select = $db->select()
             ->from(['dor' => 'object_relations_' . $object::classId()], [])
@@ -427,12 +448,14 @@ class ObjectBridge extends Model\Object\ClassDefinition\Data\ObjectsMetadata {
      * @param string|int $value
      * @return null|AbstractObject
      */
-    private function getObjectForHref($fd, $value) {
+    private function getObjectForHref($fd, $value)
+    {
         $class = current($fd->getClasses());
         if ($class && is_array($class) && array_key_exists('classes', $class)) {
             $class = $class['classes'];
             /** @var AbstractObject $className */
             $className = '\\Pimcore\\Model\\Object\\' . $class;
+
             return $className::getById($value);
         }
 
@@ -442,7 +465,8 @@ class ObjectBridge extends Model\Object\ClassDefinition\Data\ObjectsMetadata {
     /**
      * @return string
      */
-    public function getBridgeAllowedClassName() {
+    public function getBridgeAllowedClassName()
+    {
         return $this->bridgeAllowedClassName;
     }
 
@@ -450,7 +474,8 @@ class ObjectBridge extends Model\Object\ClassDefinition\Data\ObjectsMetadata {
      * @param string $bridgeAllowedClassName
      * @return ObjectBridge
      */
-    public function setBridgeAllowedClassName($bridgeAllowedClassName) {
+    public function setBridgeAllowedClassName($bridgeAllowedClassName)
+    {
         $this->bridgeAllowedClassName = $bridgeAllowedClassName;
 
         return $this;
@@ -462,7 +487,8 @@ class ObjectBridge extends Model\Object\ClassDefinition\Data\ObjectsMetadata {
      * @param array $params
      * @return array
      */
-    public function getDataForGrid($data, $object = null, $params = []) {
+    public function getDataForGrid($data, $object = null, $params = [])
+    {
         if (is_array($data)) {
             $paths = [];
             foreach ($data as $eo) {
@@ -470,8 +496,10 @@ class ObjectBridge extends Model\Object\ClassDefinition\Data\ObjectsMetadata {
                     $paths[] = (string)$eo;
                 }
             }
+
             return $paths;
         }
+
         return null;
     }
 
@@ -482,7 +510,8 @@ class ObjectBridge extends Model\Object\ClassDefinition\Data\ObjectsMetadata {
      * @param mixed $params
      * @return string
      */
-    public function getVersionPreview($data, $object = null, $params = []) {
+    public function getVersionPreview($data, $object = null, $params = [])
+    {
         if (is_array($data) && count($data) > 0) {
             $paths = [];
             foreach ($data as $o) {
@@ -490,8 +519,10 @@ class ObjectBridge extends Model\Object\ClassDefinition\Data\ObjectsMetadata {
                     $paths[] = (string)$o;
                 }
             }
+
             return implode('<br />', $paths);
         }
+
         return null;
     }
 
@@ -502,7 +533,8 @@ class ObjectBridge extends Model\Object\ClassDefinition\Data\ObjectsMetadata {
      * @param boolean $omitMandatoryCheck
      * @throws \Exception
      */
-    public function checkValidity($data, $omitMandatoryCheck = false) {
+    public function checkValidity($data, $omitMandatoryCheck = false)
+    {
         if (!$omitMandatoryCheck && $this->getMandatory() && empty($data)) {
             throw new Element\ValidationException('Empty mandatory field [ ' . $this->getName() . ' ]');
         }
@@ -533,7 +565,8 @@ class ObjectBridge extends Model\Object\ClassDefinition\Data\ObjectsMetadata {
      * @param array $params
      * @return string
      */
-    public function getForCsvExport($object, $params = []) {
+    public function getForCsvExport($object, $params = [])
+    {
         /** @var array $data */
         $data = $this->getDataFromObjectParam($object, $params);
         if (is_array($data)) {
@@ -543,6 +576,7 @@ class ObjectBridge extends Model\Object\ClassDefinition\Data\ObjectsMetadata {
                     $paths[] = $eo->getRealFullPath();
                 }
             }
+
             return implode(',', $paths);
         } else {
             return null;
@@ -557,7 +591,8 @@ class ObjectBridge extends Model\Object\ClassDefinition\Data\ObjectsMetadata {
      * @param mixed $params
      * @return array|mixed
      */
-    public function getFromCsvImport($importValue, $object = null, $params = []) {
+    public function getFromCsvImport($importValue, $object = null, $params = [])
+    {
         $values = explode(',', $importValue);
 
         $value = [];
@@ -578,7 +613,8 @@ class ObjectBridge extends Model\Object\ClassDefinition\Data\ObjectsMetadata {
      * @param array $tags
      * @return array
      */
-    public function getCacheTags($data, $tags = []) {
+    public function getCacheTags($data, $tags = [])
+    {
         $tags = is_array($tags) ? $tags : [];
 
         if (is_array($data) && count($data) > 0) {
@@ -597,13 +633,14 @@ class ObjectBridge extends Model\Object\ClassDefinition\Data\ObjectsMetadata {
      * @param $data
      * @return array
      */
-    public function resolveDependencies($data) {
+    public function resolveDependencies($data)
+    {
         $dependencies = [];
 
         if (is_array($data) && count($data) > 0) {
             foreach ($data as $o) {
                 if ($o instanceof Object\AbstractObject) {
-                    $dependencies['object_' . $o->getId()] = [
+                    $dependencies[ 'object_' . $o->getId() ] = [
                         'id'   => $o->getId(),
                         'type' => 'object',
                     ];
@@ -620,7 +657,8 @@ class ObjectBridge extends Model\Object\ClassDefinition\Data\ObjectsMetadata {
      * @param mixed $params
      * @return array|mixed|null
      */
-    public function getForWebserviceExport($object, $params = []) {
+    public function getForWebserviceExport($object, $params = [])
+    {
         $data = $this->getDataFromObjectParam($object, $params);
         if (is_array($data)) {
             $items = [];
@@ -652,7 +690,8 @@ class ObjectBridge extends Model\Object\ClassDefinition\Data\ObjectsMetadata {
      * @return array|mixed
      * @throws \Exception
      */
-    public function getFromWebserviceImport($value, $object = null, $params = [], $idMapper = null) {
+    public function getFromWebserviceImport($value, $object = null, $params = [], $idMapper = null)
+    {
         $relatedObjects = [];
         if (!$value) {
             return null;
@@ -693,7 +732,8 @@ class ObjectBridge extends Model\Object\ClassDefinition\Data\ObjectsMetadata {
      * @param array $params
      * @throws \Exception
      */
-    public function save($object, $params = []) {
+    public function save($object, $params = [])
+    {
         $db = Db::get();
         $data = $this->getDataFromObjectParam($object, $params);
         $relations = $this->getDataForResource($data, $object, $params);
@@ -727,7 +767,8 @@ class ObjectBridge extends Model\Object\ClassDefinition\Data\ObjectsMetadata {
      * @param array $params
      * @return array|null
      */
-    public function preGetData($object, $params = []) {
+    public function preGetData($object, $params = [])
+    {
         $data = null;
         if ($object instanceof Object\Concrete) {
             $data = $object->{$this->getName()};
@@ -768,7 +809,8 @@ class ObjectBridge extends Model\Object\ClassDefinition\Data\ObjectsMetadata {
      * @param array $params
      * @return null|void
      */
-    public function delete($object, $params = []) {
+    public function delete($object, $params = [])
+    {
         return null;
     }
 
@@ -777,7 +819,8 @@ class ObjectBridge extends Model\Object\ClassDefinition\Data\ObjectsMetadata {
      * @param $columns
      * @return $this|null
      */
-    public function setColumns($columns) {
+    public function setColumns($columns)
+    {
         return null;
     }
 
@@ -797,7 +840,8 @@ class ObjectBridge extends Model\Object\ClassDefinition\Data\ObjectsMetadata {
      * @param array $params
      * @return Element\ElementInterface
      */
-    public function rewriteIds($object, $idMapping, $params = []) {
+    public function rewriteIds($object, $idMapping, $params = [])
+    {
         $data = $this->getDataFromObjectParam($object, $params);
         $data = $this->rewriteIdsService($data, $idMapping);
 
@@ -807,7 +851,8 @@ class ObjectBridge extends Model\Object\ClassDefinition\Data\ObjectsMetadata {
     /**
      * @param Object\ClassDefinition\Data|self $masterDefinition
      */
-    public function synchronizeWithMasterDefinition(Object\ClassDefinition\Data $masterDefinition) {
+    public function synchronizeWithMasterDefinition(Object\ClassDefinition\Data $masterDefinition)
+    {
         $this->sourceAllowedClassName = $masterDefinition->sourceAllowedClassName;
         $this->sourceVisibleFields = $masterDefinition->sourceVisibleFields;
         $this->bridgeAllowedClassName = $masterDefinition->bridgeAllowedClassName;
@@ -825,7 +870,8 @@ class ObjectBridge extends Model\Object\ClassDefinition\Data\ObjectsMetadata {
      * @param AbstractObject $object
      * @throws \Exception
      */
-    public function enrichLayoutDefinition($object) {
+    public function enrichLayoutDefinition($object)
+    {
         if (!$this->sourceAllowedClassName || !$this->bridgeAllowedClassName || !$this->sourceVisibleFields || !$this->bridgeVisibleFields) {
             return;
         }
@@ -897,16 +943,17 @@ class ObjectBridge extends Model\Object\ClassDefinition\Data\ObjectsMetadata {
      * @param bool $readOnly
      * @param bool $hidden
      */
-    private function setFieldDefinition($fieldName, $fd, $field, $readOnly, $hidden) {
-        $this->$fieldName[$field]['name'] = $fd->getName();
-        $this->$fieldName[$field]['title'] = $this->formatTitle($fd->getTitle());
-        $this->$fieldName[$field]['fieldtype'] = $fd->getFieldtype();
-        $this->$fieldName[$field]['readOnly'] = $readOnly;
-        $this->$fieldName[$field]['hidden'] = $hidden;
-        $this->$fieldName[$field]['mandatory'] = $fd->getMandatory();
+    private function setFieldDefinition($fieldName, $fd, $field, $readOnly, $hidden)
+    {
+        $this->$fieldName[ $field ]['name'] = $fd->getName();
+        $this->$fieldName[ $field ]['title'] = $this->formatTitle($fd->getTitle());
+        $this->$fieldName[ $field ]['fieldtype'] = $fd->getFieldtype();
+        $this->$fieldName[ $field ]['readOnly'] = $readOnly;
+        $this->$fieldName[ $field ]['hidden'] = $hidden;
+        $this->$fieldName[ $field ]['mandatory'] = $fd->getMandatory();
 
         if ($fd instanceof Object\ClassDefinition\Data\Select) {
-            $this->$fieldName[$field]['options'] = $fd->getOptions();
+            $this->$fieldName[ $field ]['options'] = $fd->getOptions();
         }
     }
 
@@ -917,19 +964,22 @@ class ObjectBridge extends Model\Object\ClassDefinition\Data\ObjectsMetadata {
      * @param bool $hidden
      * @throws \Zend_Exception
      */
-    private function setSystemFieldDefinition($fieldName, $field, $hidden) {
+    private function setSystemFieldDefinition($fieldName, $field, $hidden)
+    {
         $t = \Zend_Registry::get('Zend_Translate');
-        $this->$fieldName[$field]['name'] = $field;
-        $this->$fieldName[$field]['title'] = $this->formatTitle($t->translate($field));
-        $this->$fieldName[$field]['fieldtype'] = 'input';
-        $this->$fieldName[$field]['readOnly'] = true;
-        $this->$fieldName[$field]['hidden'] = $hidden;
+        $this->$fieldName[ $field ]['name'] = $field;
+        $this->$fieldName[ $field ]['title'] = $this->formatTitle($t->translate($field));
+        $this->$fieldName[ $field ]['fieldtype'] = 'input';
+        $this->$fieldName[ $field ]['readOnly'] = true;
+        $this->$fieldName[ $field ]['hidden'] = $hidden;
     }
 
-    private function formatTitle($title){
-        if($this->newLineSplit){
+    private function formatTitle($title)
+    {
+        if ($this->newLineSplit) {
             return preg_replace('/\s+/', '<br/>', $title);
         }
+
         return $title;
     }
 
@@ -942,7 +992,8 @@ class ObjectBridge extends Model\Object\ClassDefinition\Data\ObjectsMetadata {
      * @param mixed $params
      * @return mixed
      */
-    public function marshal($value, $object = null, $params = []) {
+    public function marshal($value, $object = null, $params = [])
+    {
         if (is_array($value)) {
             $result = [];
             foreach ($value as $element) {
@@ -968,7 +1019,8 @@ class ObjectBridge extends Model\Object\ClassDefinition\Data\ObjectsMetadata {
      * @param mixed $params
      * @return mixed
      */
-    public function unmarshal($value, $object = null, $params = []) {
+    public function unmarshal($value, $object = null, $params = [])
+    {
         if (is_array($value)) {
             $result = [];
             foreach ($value as $elementData) {
@@ -989,7 +1041,8 @@ class ObjectBridge extends Model\Object\ClassDefinition\Data\ObjectsMetadata {
     /**
      * @return mixed
      */
-    public function getSourceAllowedClassName() {
+    public function getSourceAllowedClassName()
+    {
         return $this->sourceAllowedClassName;
     }
 
@@ -997,7 +1050,8 @@ class ObjectBridge extends Model\Object\ClassDefinition\Data\ObjectsMetadata {
      * @param $sourceAllowedClassName
      * @return $this
      */
-    public function setSourceAllowedClassName($sourceAllowedClassName) {
+    public function setSourceAllowedClassName($sourceAllowedClassName)
+    {
         $this->sourceAllowedClassName = $sourceAllowedClassName;
 
         return $this;
@@ -1006,7 +1060,8 @@ class ObjectBridge extends Model\Object\ClassDefinition\Data\ObjectsMetadata {
     /**
      * @return mixed
      */
-    public function getSourceVisibleFields() {
+    public function getSourceVisibleFields()
+    {
         return $this->sourceVisibleFields;
     }
 
@@ -1014,7 +1069,8 @@ class ObjectBridge extends Model\Object\ClassDefinition\Data\ObjectsMetadata {
      * @param $sourceVisibleFields
      * @return $this
      */
-    public function setSourceVisibleFields($sourceVisibleFields) {
+    public function setSourceVisibleFields($sourceVisibleFields)
+    {
         /**
          * @extjs6
          */
@@ -1030,7 +1086,8 @@ class ObjectBridge extends Model\Object\ClassDefinition\Data\ObjectsMetadata {
     /**
      * @return string
      */
-    public function getBridgeVisibleFields() {
+    public function getBridgeVisibleFields()
+    {
         return $this->bridgeVisibleFields;
     }
 
@@ -1038,7 +1095,8 @@ class ObjectBridge extends Model\Object\ClassDefinition\Data\ObjectsMetadata {
      * @param $bridgeVisibleFields
      * @return $this
      */
-    public function setBridgeVisibleFields($bridgeVisibleFields) {
+    public function setBridgeVisibleFields($bridgeVisibleFields)
+    {
         /**
          * @extjs6
          */
@@ -1054,7 +1112,8 @@ class ObjectBridge extends Model\Object\ClassDefinition\Data\ObjectsMetadata {
     /**
      * @return string
      */
-    public function getBridgeFolder() {
+    public function getBridgeFolder()
+    {
         return $this->bridgeFolder;
     }
 
@@ -1062,7 +1121,8 @@ class ObjectBridge extends Model\Object\ClassDefinition\Data\ObjectsMetadata {
      * @param string $bridgeFolder
      * @return $this
      */
-    public function setBridgeFolder($bridgeFolder) {
+    public function setBridgeFolder($bridgeFolder)
+    {
         $this->bridgeFolder = $bridgeFolder;
 
         return $this;
@@ -1071,21 +1131,24 @@ class ObjectBridge extends Model\Object\ClassDefinition\Data\ObjectsMetadata {
     /**
      * @return string
      */
-    public function getPhpdocType() {
+    public function getPhpdocType()
+    {
         return $this->getBridgeFullClassName() . '[]';
     }
 
     /**
      * @return string
      */
-    public function getSourceHiddenFields() {
+    public function getSourceHiddenFields()
+    {
         return $this->sourceHiddenFields;
     }
 
     /**
      * @return string
      */
-    public function getSourceHiddenFieldsAsArray() {
+    public function getSourceHiddenFieldsAsArray()
+    {
         return explode(',', $this->sourceHiddenFields);
     }
 
@@ -1093,7 +1156,8 @@ class ObjectBridge extends Model\Object\ClassDefinition\Data\ObjectsMetadata {
      * @param $sourceHiddenFields
      * @return $this
      */
-    public function setSourceHiddenFields($sourceHiddenFields) {
+    public function setSourceHiddenFields($sourceHiddenFields)
+    {
         /**
          * @extjs6
          */
@@ -1109,14 +1173,16 @@ class ObjectBridge extends Model\Object\ClassDefinition\Data\ObjectsMetadata {
     /**
      * @return string
      */
-    public function getBridgeHiddenFields() {
+    public function getBridgeHiddenFields()
+    {
         return $this->bridgeHiddenFields;
     }
 
     /**
      * @return string
      */
-    public function getBridgeHiddenFieldsAsArray() {
+    public function getBridgeHiddenFieldsAsArray()
+    {
         return explode(',', $this->bridgeHiddenFields);
     }
 
@@ -1125,7 +1191,8 @@ class ObjectBridge extends Model\Object\ClassDefinition\Data\ObjectsMetadata {
      * @param $bridgeHiddenFields
      * @return $this
      */
-    public function setBridgeHiddenFields($bridgeHiddenFields) {
+    public function setBridgeHiddenFields($bridgeHiddenFields)
+    {
         /**
          * @extjs6
          */
@@ -1142,7 +1209,8 @@ class ObjectBridge extends Model\Object\ClassDefinition\Data\ObjectsMetadata {
      * @param string $name
      * @return bool
      */
-    private function bridgeFieldIsHidden($name) {
+    private function bridgeFieldIsHidden($name)
+    {
         return in_array($name, $this->getBridgeHiddenFieldsAsArray(), true);
     }
 
@@ -1150,49 +1218,56 @@ class ObjectBridge extends Model\Object\ClassDefinition\Data\ObjectsMetadata {
      * @param string $name
      * @return bool
      */
-    private function sourceFieldIsHidden($name) {
+    private function sourceFieldIsHidden($name)
+    {
         return in_array($name, $this->getSourceHiddenFieldsAsArray(), true);
     }
 
     /**
      * @return bool
      */
-    public function getAutoResize() {
+    public function getAutoResize()
+    {
         return $this->autoResize;
     }
 
     /**
      * @param bool $autoResize
      */
-    public function setAutoResize($autoResize) {
+    public function setAutoResize($autoResize)
+    {
         $this->autoResize = $autoResize;
     }
 
     /**
      * @return int
      */
-    public function getMaxWidthResize() {
+    public function getMaxWidthResize()
+    {
         return $this->maxWidthResize;
     }
 
     /**
      * @param int $maxWidthResize
      */
-    public function setMaxWidthResize($maxWidthResize) {
+    public function setMaxWidthResize($maxWidthResize)
+    {
         $this->maxWidthResize = $maxWidthResize;
     }
 
     /**
      * @return boolean
      */
-    public function getNewLineSplit() {
+    public function getNewLineSplit()
+    {
         return $this->newLineSplit;
     }
 
     /**
      * @param boolean $newLineSplit
      */
-    public function setNewLineSplit($newLineSplit) {
+    public function setNewLineSplit($newLineSplit)
+    {
         $this->newLineSplit = $newLineSplit;
     }
 }

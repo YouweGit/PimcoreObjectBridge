@@ -206,21 +206,32 @@ pimcore.object.classes.data.objectBridge = Class.create(pimcore.object.classes.d
     getHeaderConfigPanel: function () {
 
         return [{
-                xtype: "checkbox",
-                fieldLabel: t("auto_resize"),
-                name: "autoResize",
-                checked: this.datax.autoResize
-            },{
-                xtype: "checkbox",
-                fieldLabel: t("new_line_split"),
-                name: "newLineSplit",
-                checked: this.datax.newLineSplit
-            }, {
-                xtype: 'numberfield',
-                fieldLabel: t("max_width_resize"),
-                name: 'maxWidthResize',
-                value: this.datax.maxWidthResize
-            }];
+            xtype: "checkbox",
+            fieldLabel: t("auto_resize"),
+            name: "autoResize",
+            checked: this.datax.autoResize
+        }, {
+            xtype: "checkbox",
+            fieldLabel: t("new_line_split"),
+            name: "newLineSplit",
+            checked: this.datax.newLineSplit
+        }, {
+            xtype: 'numberfield',
+            fieldLabel: t("max_width_resize"),
+            name: 'maxWidthResize',
+            value: this.datax.maxWidthResize
+        }, {
+            xtype: "checkbox",
+            fieldLabel: t("allow_create"),
+            name: "allowCreate",
+            checked: this.datax.allowCreate
+        }, {
+            xtype: "checkbox",
+            fieldLabel: t("allow_delete"),
+            name: "allowDelete",
+            checked: this.datax.allowDelete
+        }
+        ];
     },
 
     /**
@@ -644,6 +655,8 @@ pimcore.object.classes.data.objectBridge = Class.create(pimcore.object.classes.d
                 bridgeHiddenFields: source.datax.bridgeHiddenFields,
                 bridgeField: source.datax.bridgeField,
                 bridgeFolder: source.datax.bridgeFolder,
+                allowCreate: source.datax.allowCreate,
+                allowDelete: source.datax.allowDelete,
                 remoteOwner: source.datax.remoteOwner,
                 lazyLoading: source.datax.lazyLoading,
                 classes: source.datax.classes
