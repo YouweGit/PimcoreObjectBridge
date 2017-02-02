@@ -1,0 +1,12 @@
+objectBridge,Object bridge
+bridge_folder,Bridge folder
+source_allowed_class,Source allowed class
+source_visible_fields,Source visible fields
+bridge_allowed_class,Bridge allowed class
+bridge_visible_fields,Bridge visible fields
+bridge_field,Bridge field
+source_hidden_fields,Source hidden fields
+bridge_hidden_fields,Bridge hidden fields
+auto_resize,Auto resize columns
+new_line_split,New line split
+max_width_resize,Max width resize

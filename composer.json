@@ -1,0 +1,18 @@
+{
+  "name": "youwe/pimcore-object-bridge",
+  "description": "Allows editing an object inline that doesn't link directly many-to-many like",
+  "type": "pimcore-plugin",
+  "require": {
+    "pimcore/installer-plugin": "^1.5"
+  },
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "Manea Eugen",
+      "email": "e.manea@youwe.nl"
+    },
+    {
+      "name": "Youwe"
+    }
+  ]
+}

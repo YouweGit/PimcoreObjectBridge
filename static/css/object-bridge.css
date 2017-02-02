@@ -1,0 +1,9 @@
+.object_bridge_grid .x-grid-with-col-lines .x-grid-item-selected .x-grid-cell.invalid-td-cell,
+.object_bridge_grid .invalid-td-cell{
+    -webkit-box-shadow:inset 0 0 1px 1px #FF554F;
+    box-shadow:inset 0 0 1px 1px #FF554F;
+}
+
+.pimcore_icon_objectBridge{
+    background: url(/pimcore/static6/img/flat-color-icons/multihref.svg) center center no-repeat !important;
+}
