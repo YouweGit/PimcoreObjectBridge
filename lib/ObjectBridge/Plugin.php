@@ -31,6 +31,6 @@ class Plugin extends PluginLib\AbstractPlugin implements PluginLib\PluginInterfa
 
     public static function getTranslationFile($language)
     {
-        return '/ObjectBridge/config/texts/en.csv';
+        return '/PimcoreObjectBridge/config/texts/en.csv';
     }
 }
