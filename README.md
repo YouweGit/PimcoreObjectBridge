@@ -80,6 +80,27 @@ In this example, you would add the ObjectBridge field to Garage.
 The bridge table would be GarageCar.
 GarageCar would have a (single) HREF field to Car. 
 
+Fields for example tables:
+
+Garage
+* name
+* location
+* garageCars (field type = object-bridge)
+
+GarageCar
+* totalQuantity
+* availableQuantity
+* car (field type = href)
+
+Car
+* type
+* brand
+* price
+
+A certain car can be present in multiple garages, in different quantities.
+
+
+
 ### Todo's:
 
 * Option to add custom add new object window (now default add functionality)
