@@ -85,10 +85,12 @@ Fields for example tables:
 Garage
 * name
 * location
+* garageCars (field type = object-bridge)
 
 GarageCar
 * totalQuantity
 * availableQuantity
+* car (field type = href)
 
 Car
 * type
