@@ -1,10 +1,12 @@
 # Object bridge field
+
 Allows editing an object inline that doesn't link directly many-to-many like
 Example:
 MainObject -> BridgeObject -> SourceObject allows to edit inline BridgeObject after linking a source object to it
 Cart -> ProductItem -> Product
 
 ### How to install
+
 1. Enable plugin
 2. Field should be available in field selector under relations
 
@@ -49,7 +51,37 @@ Bridge object editing fields:
 Limitation:
 When HREF is used, there can only be one class type linked. First one will be used.
 
-Todo's:
+### Example scenario
+
+            +--------------+             +--------------+
+            |              |             |              |
+            |    Garage    |             |    Garage    |
+            |              |             |              |
+            +-+-----------++             +----+---------+
+              |           |                   |
+              |           |                   |
+              |           |                   |
+    +---------+---+    +--+----------+   +----+--------+
+    |             |    |             |   |             |
+    |  GarageCar  |    |  GarageCar  |   |  GarageCar  |
+    |             |    |             |   |             |
+    +---------+---+    +--+----------+   +----+--------+
+              |           |                   |
+              |           |     +-------------+
+              |           |     |
+    +---------+---+    +--+-----+----+
+    |             |    |             |
+    |     Car     |    |     Car     |
+    |             |    |             |
+    +-------------+    +-------------+
+
+
+In this example, you would add the ObjectBridge field to Garage.
+The bridge table would be GarageCar.
+GarageCar would have a (single) HREF field to Car. 
+
+### Todo's:
+
 * Option to add custom add new object window (now default add functionality)
 * Default value
 * Testing
