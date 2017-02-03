@@ -19,8 +19,8 @@
 
         <!-- include paths relative to plugin-directory -->
         <pluginIncludePaths>
-            <path>/ObjectBridge/models</path>
-            <path>/ObjectBridge/lib</path>
+            <path>/PimcoreObjectBridge/models</path>
+            <path>/PimcoreObjectBridge/lib</path>
         </pluginIncludePaths>
 
         <!-- namespaces to register with autoloader-->
@@ -30,13 +30,13 @@
 
         <!-- js files with path relative to plugin-directory -->
         <pluginJsPaths>
-            <path>/plugins/ObjectBridge/static/js/pimcore/objects/tags/objectBridge.js</path>
-            <path>/plugins/ObjectBridge/static/js/pimcore/objects/classes/data/objectBridge.js</path>
+            <path>/plugins/PimcoreObjectBridge/static/js/pimcore/objects/tags/objectBridge.js</path>
+            <path>/plugins/PimcoreObjectBridge/static/js/pimcore/objects/classes/data/objectBridge.js</path>
         </pluginJsPaths>
 
         <!-- css files with path relative to plugin-directory -->
         <pluginCssPaths>
-            <path>/plugins/ObjectBridge/static/css/object-bridge.css</path>
+            <path>/plugins/PimcoreObjectBridge/static/css/object-bridge.css</path>
         </pluginCssPaths>
     </plugin>
 </zend-config>
