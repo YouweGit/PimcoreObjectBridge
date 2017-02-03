@@ -868,9 +868,10 @@ class ObjectBridge extends Model\Object\ClassDefinition\Data\ObjectsMetadata
      * Adds fields details like read only, type , title ..
      * and data for select boxes and href's
      * @param AbstractObject $object
+     * @param array $context additional contextual data
      * @throws \Exception
      */
-    public function enrichLayoutDefinition($object)
+    public function enrichLayoutDefinition($object, $context = [])
     {
         if (!$this->sourceAllowedClassName || !$this->bridgeAllowedClassName || !$this->sourceVisibleFields || !$this->bridgeVisibleFields) {
             return;
