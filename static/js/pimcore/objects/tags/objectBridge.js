@@ -321,7 +321,7 @@ pimcore.object.tags.objectBridge = Class.create(pimcore.object.tags.objects, {
             ]
         });
 
-        if (!readOnly) {
+        if (!readOnly && this.fieldConfig.allowDelete) {
             columns.push({
                 xtype: 'actioncolumn',
                 width: 40,
@@ -354,18 +354,18 @@ pimcore.object.tags.objectBridge = Class.create(pimcore.object.tags.objects, {
                 "->",
                 {
                     xtype: "button",
-                    iconCls: "pimcore_icon_delete",
-                    handler: this.empty.bind(this)
-                },
-                {
-                    xtype: "button",
                     iconCls: "pimcore_icon_search",
                     handler: this.openSearchEditor.bind(this)
                 }
-                // ,
-
-
             ]);
+            if (this.fieldConfig.allowDelete) {
+                tbarItems.push({
+                    xtype: "button",
+                    iconCls: "pimcore_icon_delete",
+                    handler: this.empty.bind(this)
+                })
+            }
+
             if (this.fieldConfig.allowCreate) {
                 tbarItems.push(this.getCreateControl())
             }
