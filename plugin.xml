@@ -3,7 +3,7 @@
     <plugin>
 
         <!-- the plugin name [A-Za-z_] -->
-        <pluginName>ObjectBridge</pluginName>
+        <pluginName>PimcoreObjectBridge</pluginName>
         <!--<pluginIcon>/plugins/IboodUI/static/img/icon.png</pluginIcon>-->
 
         <!-- a short description -->
