@@ -3,7 +3,8 @@
   "description": "Allows editing an object inline that doesn't link directly many-to-many like",
   "type": "pimcore-plugin",
   "require": {
-    "pimcore/installer-plugin": "^1.5"
+    "pimcore/installer-plugin": "^1.5",
+    "youwe/pimcore-href-typeahead": "0.*"
   },
   "license": "MIT",
   "authors": [
