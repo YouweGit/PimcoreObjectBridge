@@ -23,7 +23,9 @@ class PersistDelete
 
         /** @var Object\Concrete $target */
         $target = $event->getTarget();
-
+        if (!$target instanceof Object\Concrete) {
+            return;
+        }
         // Check if target is the host object of object bridge if so then delete the objects
         $this->deleteSourceObjectsIfHasField($target);
 
