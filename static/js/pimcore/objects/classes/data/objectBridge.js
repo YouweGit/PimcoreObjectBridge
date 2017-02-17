@@ -106,6 +106,23 @@ pimcore.object.classes.data.objectBridge = Class.create(pimcore.object.classes.d
             value: this.datax.bridgeFolder
         });
 
+        this.specificPanel.add({
+            allowBlank: true,
+            minWidth: 500,
+            xtype: 'textfield',
+            fieldLabel: t('source_prefix'),
+            name: 'sourcePrefix',
+            value: this.datax.sourcePrefix
+        });
+
+        this.specificPanel.add({
+            allowBlank: true,
+            minWidth: 500,
+            xtype: 'textfield',
+            fieldLabel: t('bridge_prefix'),
+            name: 'bridgePrefix',
+            value: this.datax.bridgePrefix
+        });
 
         this.stores = {};
         this.grids = {};
@@ -171,7 +188,8 @@ pimcore.object.classes.data.objectBridge = Class.create(pimcore.object.classes.d
                 fieldLabel: t("height"),
                 name: "height",
                 value: this.datax.height
-            }, {
+            },
+            {
                 xtype: "numberfield",
                 fieldLabel: t("maximum_items"),
                 name: "maxItems",
@@ -204,7 +222,6 @@ pimcore.object.classes.data.objectBridge = Class.create(pimcore.object.classes.d
     },
 
     getHeaderConfigPanel: function () {
-
         return [{
             xtype: "checkbox",
             fieldLabel: t("auto_resize"),
@@ -657,6 +674,8 @@ pimcore.object.classes.data.objectBridge = Class.create(pimcore.object.classes.d
                 bridgeFolder: source.datax.bridgeFolder,
                 allowCreate: source.datax.allowCreate,
                 allowDelete: source.datax.allowDelete,
+                sourcePrefix: source.datax.sourcePrefix,
+                bridgePrefix: source.datax.bridgePrefix,
                 remoteOwner: source.datax.remoteOwner,
                 lazyLoading: source.datax.lazyLoading,
                 classes: source.datax.classes

@@ -12,3 +12,5 @@ new_line_split,New line split
 max_width_resize,Max width resize
 allow_create,Allow create
 allow_delete,Allow delete
+bridge_prefix,Bridge prefix
+source_prefix,Source prefix

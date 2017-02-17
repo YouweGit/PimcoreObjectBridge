@@ -83,6 +83,11 @@ class ObjectBridge extends Model\Object\ClassDefinition\Data\ObjectsMetadata
     /** @var bool */
     public $allowDelete;
 
+    /** @var string */
+    public $bridgePrefix;
+    /** @var string */
+    public $sourcePrefix;
+
     /**
      * Converts sql data to object
      * @see Object\ClassDefinition\Data::getDataFromResource
