@@ -192,9 +192,8 @@ pimcore.object.tags.objectBridge = Class.create(pimcore.object.tags.objects, {
             sortable: true,
             minWidth: minWidth
         });
-        if (renderer === null) {
-            column.hidden = !!layout.hidden
-        }
+
+        column.hidden = layout.hidden;
         return column;
     },
 
