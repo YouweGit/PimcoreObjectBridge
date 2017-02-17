@@ -949,7 +949,7 @@ class ObjectBridge extends Model\Object\ClassDefinition\Data\ObjectsMetadata
         $this->$fieldName[ $field ]['name'] = $fd->getName();
         $this->$fieldName[ $field ]['title'] = $this->formatTitle($fd->getTitle());
         $this->$fieldName[ $field ]['fieldtype'] = $fd->getFieldtype();
-        $this->$fieldName[ $field ]['readOnly'] = $readOnly;
+        $this->$fieldName[ $field ]['readOnly'] = $readOnly || $fd->getNoteditable() ? true : false;
         $this->$fieldName[ $field ]['hidden'] = $hidden;
         $this->$fieldName[ $field ]['mandatory'] = $fd->getMandatory();
 

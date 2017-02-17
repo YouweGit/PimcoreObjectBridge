@@ -89,44 +89,53 @@ pimcore.object.tags.objectBridge = Class.create(pimcore.object.tags.objects, {
      * @param {string} classNameText
      * @param {{name: string, title:string, fieldtype: string, readOnly: boolean, mandatory:boolean, hidden:boolean, options:array }} layout
      * ex Object {name: "brand", title: "Brand", fieldtype: "href", readOnly: true, allowBlank: true}
-     * @param {bool} readOnly, true if user has no permission to edit current object
+     * @param {bool} readOnly, true if user has no permission to edit current object, will overrule layout.readOnly
      * @returns {Ext.grid.column.Column}
      */
     getColumnFromLayout: function (classNameText, layout, readOnly) {
         var editor = null,
             renderer = null,
-            listeners = null,
             minWidth = 40;
 
-        if (layout.fieldtype == "input" && !readOnly && !layout.readOnly) {
+        readOnly = (readOnly || layout.readOnly);
+
+        if (layout.fieldtype == "input" && !readOnly) {
             editor = {
                 xtype: 'textfield',
                 allowBlank: !layout.mandatory
             };
-            renderer = this.renderWithValidation.bind(this);
+            renderer = this.renderWithValidation;
         }
-        else if (layout.fieldtype == "numeric" && !readOnly && !layout.readOnly) {
-            renderer = this.renderWithValidation.bind(this);
+        else if (layout.fieldtype == "numeric" && !readOnly) {
+            renderer = this.renderWithValidation;
             editor = {
                 xtype: 'numberfield',
                 allowBlank: !layout.mandatory
             };
         }
         else if (layout.fieldtype == "checkbox") {
-            renderer = this.renderCheckbox;
-            if (readOnly && layout.readOnly) {
-                return Ext.create('Ext.grid.column.Check'), {
-                    header: layout.title,
-                    dataIndex: classNameText + '_' + layout.name,
-                    width: width,
-                    renderer: renderer
-                };
+            // There seems to be a problem with Ext checkbox column
+            // As a workaround we will skip the composition of the element and return
+            // it as soon as possible meaning all general stuff on bottom of
+            // this function will be passed directly to this column
+
+            var checkBoxColumn =  Ext.create('Ext.grid.column.Check',{
+                text: layout.title,
+                width: 40,
+                align: 'left',
+                hidden: !!layout.hidden,
+                sortable: true,
+                dataIndex: classNameText + '_' + layout.name
+            });
+
+            if(readOnly){
+                checkBoxColumn.setDisabled(true);
             }
-            editor = Ext.create('Ext.form.field.Checkbox', {style: 'margin-top: 2px;'});
+            return checkBoxColumn ;
         }
 
-        else if (layout.fieldtype == "select" && !readOnly && !layout.readOnly) {
-            renderer = this.renderDisplayField.bind(this);
+        else if (layout.fieldtype == "select" && !readOnly) {
+            renderer = this.renderDisplayField;
             editor = Ext.create('Ext.form.ComboBox', {
                 allowBlank: !layout.mandatory,
                 typeAhead: true,
@@ -146,8 +155,8 @@ pimcore.object.tags.objectBridge = Class.create(pimcore.object.tags.objects, {
                     data: layout.options
                 })
             });
-        } else if ((layout.fieldtype == "href" || layout.fieldtype == "hrefTypeahead") && !readOnly && !layout.readOnly) {
-            renderer = this.renderDisplayField.bind(this);
+        } else if ((layout.fieldtype == "href" || layout.fieldtype == "hrefTypeahead") && !readOnly) {
+            renderer = this.renderDisplayField;
             minWidth = 200;
             editor = Ext.create('Ext.form.ComboBox', {
                 allowBlank: !layout.mandatory,
@@ -188,11 +197,11 @@ pimcore.object.tags.objectBridge = Class.create(pimcore.object.tags.objects, {
             dataIndex: classNameText + '_' + layout.name,
             editor: editor,
             renderer: renderer,
-            listeners: listeners,
             sortable: true,
             minWidth: minWidth
         });
-        if (renderer === null) {
+        // Never hide read-only fields because users will see the error but they cannot see which one is it
+        if (readOnly === false) {
             column.hidden = !!layout.hidden
         }
         return column;
@@ -213,8 +222,8 @@ pimcore.object.tags.objectBridge = Class.create(pimcore.object.tags.objects, {
         var columns = [];
 
         // Make id visible only if specifically selected
-        var sourceIdCol = {header: 'Source ID', dataIndex: this.sourceClassName + '_id', width: 50, hidden: true};
-        var bridgeIdCol = {header: 'Bridge ID', dataIndex: this.bridgeClassName + '_id', width: 50, hidden: true};
+        var sourceIdCol = {text: 'Source ID', dataIndex: this.sourceClassName + '_id', width: 50, hidden: true};
+        var bridgeIdCol = {text: 'Bridge ID', dataIndex: this.bridgeClassName + '_id', width: 50, hidden: true};
 
         if (in_array('id', sourceVisibleFields)) {
             sourceIdCol.hidden = false;
@@ -237,7 +246,7 @@ pimcore.object.tags.objectBridge = Class.create(pimcore.object.tags.objects, {
                 if (!sourceFieldLayout) {
                     throw new Error(sourceVisibleFields[i] + ' is missing from field definition, please add it under enrichLayoutDefinition at Pimcore\\Model\\Object\\ClassDefinition\\Data\\ObjectBridge');
                 }
-                columns.push(this.getColumnFromLayout(this.sourceClassName, sourceFieldLayout, readOnly));
+                columns.push(this.getColumnFromLayout(this.sourceClassName, sourceFieldLayout, true));
             }
         }
 
@@ -452,7 +461,6 @@ pimcore.object.tags.objectBridge = Class.create(pimcore.object.tags.objects, {
                 });
             }.bind(this));
         }
-
         return this.component;
     },
 
@@ -613,13 +621,6 @@ pimcore.object.tags.objectBridge = Class.create(pimcore.object.tags.objects, {
             }.bind(this)
         });
     },
-    /**
-     * @param {string} value
-     * @returns {boolean}
-     */
-    hasEmptyValue: function (value) {
-        return value === "" || value === null || value === false || typeof value === 'undefined';
-    },
 
     onRefreshComponent: function (dataview) {
         var grid = dataview.panel,
@@ -652,9 +653,8 @@ pimcore.object.tags.objectBridge = Class.create(pimcore.object.tags.objects, {
      * @returns {*}
      */
     renderWithValidation: function (value, metaData, rec) {
-
         var e = metaData.column.getEditor(rec);
-        if (e.allowBlank === false && this.hasEmptyValue(value)) {
+        if (e.allowBlank === false && (value === "" || value === null || value === false || typeof value === 'undefined')) {
             metaData.tdCls = 'invalid-td-cell';
         } else {
             metaData.tdCls = '';
@@ -675,7 +675,7 @@ pimcore.object.tags.objectBridge = Class.create(pimcore.object.tags.objects, {
             return record.data[e.valueField] === value;
         });
 
-        if (e.allowBlank === false && this.hasEmptyValue(value)) {
+        if (e.allowBlank === false && (value === "" || value === null || value === false || typeof value === 'undefined')) {
             metaData.tdCls = 'invalid-td-cell';
         } else {
             metaData.tdCls = '';
@@ -685,21 +685,7 @@ pimcore.object.tags.objectBridge = Class.create(pimcore.object.tags.objects, {
             return storeRecord.data[e.displayField];
         }
     },
-    /**
-     * @param {string} value
-     * @param {Object} metaData
-     * @param {Object} record
-     * @param {int} rowIndex
-     * @param {int} colIndex
-     * @param {Object} store
-     * @returns {*}
-     */
-    renderCheckbox: function (value, metaData, record, rowIndex, colIndex, store) {
-        if (value) {
-            return '<div style="text-align: center"><div role="button" class="x-grid-checkcolumn x-grid-checkcolumn-checked" style=""></div></div>';
-        }
-        return '<div style="text-align: center"><div role="button" class="x-grid-checkcolumn" style=""></div></div>';
-    },
+
     getSourceVisibleFieldsAsArray: function () {
         return this.fieldConfig.sourceVisibleFields.split(",");
     },
