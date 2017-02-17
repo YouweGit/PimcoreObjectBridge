@@ -200,10 +200,8 @@ pimcore.object.tags.objectBridge = Class.create(pimcore.object.tags.objects, {
             sortable: true,
             minWidth: minWidth
         });
-        // Never hide read-only fields because users will see the error but they cannot see which one is it
-        if (readOnly === false) {
-            column.hidden = !!layout.hidden
-        }
+
+        column.hidden = layout.hidden;
         return column;
     },
 
