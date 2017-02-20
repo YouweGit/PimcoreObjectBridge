@@ -867,6 +867,10 @@ class ObjectBridge extends Model\Object\ClassDefinition\Data\ObjectsMetadata
         $this->bridgeHiddenFields = $masterDefinition->bridgeHiddenFields;
         $this->bridgeField = $masterDefinition->bridgeField;
         $this->bridgeFolder = $masterDefinition->bridgeFolder;
+        $this->sourcePrefix = $masterDefinition->sourcePrefix;
+        $this->bridgePrefix = $masterDefinition->bridgePrefix;
+        $this->allowCreate = $masterDefinition->allowCreate;
+        $this->allowDelete = $masterDefinition->allowDelete;
     }
 
     /**
@@ -1276,4 +1280,71 @@ class ObjectBridge extends Model\Object\ClassDefinition\Data\ObjectsMetadata
     {
         $this->newLineSplit = $newLineSplit;
     }
+
+    /**
+     * @return boolean
+     */
+    public function getAllowCreate()
+    {
+        return $this->allowCreate;
+    }
+
+    /**
+     * @param boolean $newLineSplit
+     */
+    public function setAllowCreate($ac)
+    {
+        $this->allowCreate = $ac;
+    }
+
+    /**
+     * @return boolean
+     */
+    public function getAllowDelete()
+    {
+        return $this->allowDelete;
+    }
+
+    /**
+     * @param boolean $newLineSplit
+     */
+    public function setAllowDelete($ac)
+    {
+        $this->allowDelete = $ac;
+    }
+
+    /**
+     * @return string
+     */
+    public function getSourcePrefix()
+    {
+        return $this->sourcePrefix;
+    }
+
+    /**
+     * @param string $newLineSplit
+     */
+    public function setSourcePrefix($sourcePrefix)
+    {
+        $this->sourcePrefix = $sourcePrefix;
+    }
+
+    /**
+     * @return string
+     */
+    public function getBridgePrefix()
+    {
+        return $this->bridgePrefix;
+    }
+
+    /**
+     * @param string $newLineSplit
+     */
+    public function setBridgePrefix($bridgePrefix)
+    {
+        $this->bridgePrefix = $bridgePrefix;
+    }
+
+
+
 }
