@@ -92,12 +92,13 @@ pimcore.object.tags.objectBridge = Class.create(pimcore.object.tags.objects, {
      * @param {bool} readOnly, true if user has no permission to edit current object, will overrule layout.readOnly
      * @returns {Ext.grid.column.Column}
      */
-    getColumnFromLayout: function (classNameText, layout, readOnly) {
+    getColumnFromLayout: function (classNameText, layout, readOnly, prefix) {
         var editor = null,
             renderer = null,
             minWidth = 40;
 
         readOnly = (readOnly || layout.readOnly);
+        prefix = ((prefix + ' ') || (''));
 
         if (layout.fieldtype == "input" && !readOnly) {
             editor = {
@@ -193,7 +194,7 @@ pimcore.object.tags.objectBridge = Class.create(pimcore.object.tags.objects, {
 
 
         var column = Ext.create('Ext.grid.column.Column', {
-            text: layout.title,
+            text: prefix + '<br/>' + layout.title,
             dataIndex: classNameText + '_' + layout.name,
             editor: editor,
             renderer: renderer,
@@ -244,7 +245,7 @@ pimcore.object.tags.objectBridge = Class.create(pimcore.object.tags.objects, {
                 if (!sourceFieldLayout) {
                     throw new Error(sourceVisibleFields[i] + ' is missing from field definition, please add it under enrichLayoutDefinition at Pimcore\\Model\\Object\\ClassDefinition\\Data\\ObjectBridge');
                 }
-                columns.push(this.getColumnFromLayout(this.sourceClassName, sourceFieldLayout, true));
+                columns.push(this.getColumnFromLayout(this.sourceClassName, sourceFieldLayout, true, this.fieldConfig.sourcePrefix));
             }
         }
 
@@ -254,7 +255,7 @@ pimcore.object.tags.objectBridge = Class.create(pimcore.object.tags.objects, {
                 if (!bridgeFieldLayout) {
                     throw new Error(bridgeVisibleFields[i] + ' is missing from field definition, please add it under enrichLayoutDefinition at Pimcore\\Model\\Object\\ClassDefinition\\Data\\ObjectBridge');
                 }
-                var column = this.getColumnFromLayout(this.bridgeClassName, bridgeFieldLayout, readOnly);
+                var column = this.getColumnFromLayout(this.bridgeClassName, bridgeFieldLayout, readOnly, this.fieldConfig.bridgePrefix);
 
                 // Make sure that the ids of unique href fields are loaded
                 if ((bridgeFieldLayout.fieldtype == "href" || bridgeFieldLayout.fieldtype == "hrefTypeahead") && column && column.editor && column.editor.getStore()) {
