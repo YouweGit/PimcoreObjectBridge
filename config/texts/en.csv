@@ -14,3 +14,4 @@ allow_create,Allow create
 allow_delete,Allow delete
 bridge_prefix,Bridge prefix
 source_prefix,Source prefix
+decimal_precision,Decimal precision

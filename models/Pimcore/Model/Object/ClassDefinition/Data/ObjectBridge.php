@@ -87,6 +87,8 @@ class ObjectBridge extends Model\Object\ClassDefinition\Data\ObjectsMetadata
     public $bridgePrefix;
     /** @var string */
     public $sourcePrefix;
+    /** @var string */
+    public $decimalPrecision;
 
     /**
      * Converts sql data to object
@@ -871,6 +873,7 @@ class ObjectBridge extends Model\Object\ClassDefinition\Data\ObjectsMetadata
         $this->bridgePrefix = $masterDefinition->bridgePrefix;
         $this->allowCreate = $masterDefinition->allowCreate;
         $this->allowDelete = $masterDefinition->allowDelete;
+        $this->decimalPrecision = $masterDefinition->decimalPrecision;
     }
 
     /**
@@ -1345,6 +1348,21 @@ class ObjectBridge extends Model\Object\ClassDefinition\Data\ObjectsMetadata
         $this->bridgePrefix = $bridgePrefix;
     }
 
+    /**
+     * @return string
+     */
+    public function getDecimalPrecision()
+    {
+        return $this->decimalPrecision;
+    }
+
+    /**
+     * @param string $decimalPrecision
+     */
+    public function setDecimalPrecision($decimalPrecision)
+    {
+        $this->decimalPrecision = $decimalPrecision;
+    }
 
 
 }

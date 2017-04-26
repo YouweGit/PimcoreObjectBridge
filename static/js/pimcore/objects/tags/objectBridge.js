@@ -109,8 +109,10 @@ pimcore.object.tags.objectBridge = Class.create(pimcore.object.tags.objects, {
         }
         else if (layout.fieldtype == "numeric" && !readOnly) {
             renderer = this.renderWithValidation;
+            var decimalPrecision = Ext.isNumeric(this.fieldConfig.decimalPrecision) ? this.fieldConfig.decimalPrecision : 2;
             editor = {
                 xtype: 'numberfield',
+                decimalPrecision: decimalPrecision,
                 allowBlank: !layout.mandatory
             };
         }
@@ -120,7 +122,7 @@ pimcore.object.tags.objectBridge = Class.create(pimcore.object.tags.objects, {
             // it as soon as possible meaning all general stuff on bottom of
             // this function will be passed directly to this column
 
-            var checkBoxColumn =  Ext.create('Ext.grid.column.Check',{
+            var checkBoxColumn = Ext.create('Ext.grid.column.Check', {
                 text: layout.title,
                 width: 40,
                 align: 'left',
@@ -129,10 +131,10 @@ pimcore.object.tags.objectBridge = Class.create(pimcore.object.tags.objects, {
                 dataIndex: classNameText + '_' + layout.name
             });
 
-            if(readOnly){
+            if (readOnly) {
                 checkBoxColumn.setDisabled(true);
             }
-            return checkBoxColumn ;
+            return checkBoxColumn;
         }
 
         else if (layout.fieldtype == "select" && !readOnly) {

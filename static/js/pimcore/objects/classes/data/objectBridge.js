@@ -26,6 +26,10 @@ pimcore.object.classes.data.objectBridge = Class.create(pimcore.object.classes.d
             this.datax.lazyLoading = true;
         }
 
+        if (typeof this.datax.decimalPrecision == "undefined") {
+            this.datax.decimalPrecision = 2;
+        }
+
         // overwrite default settings
         this.availableSettingsFields = ["name", "title", "tooltip", "mandatory", "noteditable", "invisible",
             "visibleGridView", "visibleSearch", "style"];
@@ -122,6 +126,14 @@ pimcore.object.classes.data.objectBridge = Class.create(pimcore.object.classes.d
             fieldLabel: t('bridge_prefix'),
             name: 'bridgePrefix',
             value: this.datax.bridgePrefix
+        });
+        this.specificPanel.add({
+            allowBlank: true,
+            minWidth: 500,
+            xtype: 'numberfield',
+            fieldLabel: t('decimal_precision'),
+            name: 'decimalPrecision',
+            value: this.datax.decimalPrecision
         });
 
         this.stores = {};
@@ -674,6 +686,7 @@ pimcore.object.classes.data.objectBridge = Class.create(pimcore.object.classes.d
                 bridgeFolder: source.datax.bridgeFolder,
                 allowCreate: source.datax.allowCreate,
                 allowDelete: source.datax.allowDelete,
+                decimalPrecision: source.datax.decimalPrecision,
                 sourcePrefix: source.datax.sourcePrefix,
                 bridgePrefix: source.datax.bridgePrefix,
                 remoteOwner: source.datax.remoteOwner,
