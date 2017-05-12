@@ -216,7 +216,7 @@ class ObjectBridge extends Model\Object\ClassDefinition\Data\ObjectsMetadata
                             $valueObject = Service::getValueForObject($bridgeObject, $bridgeVisibleField);
                             $columnData[ $key ] = $valueObject ? $valueObject->getId() : null;
                         } else {
-                            $columnData[ $key ] = Service::getValueForObject($bridgeObject, $bridgeVisibleField);
+                            $columnData[ $key ] = Service::getValueForObject($bridgeObject, $bridgeVisibleField, true);
                         }
                     }
 

@@ -1,28 +1,36 @@
 <?php
+
 namespace ObjectBridge\Object;
 
 use Pimcore\Model\Object;
-use Pimcore\Model\Object\Service as PimcoreObjectService;
 
-class Service {
+class Service
+{
     /**
      * @param Object\AbstractObject|Object\Concrete $object
      * @param string $key
+     * @param bool $fallbackDefaultValue
      * @return mixed
      */
-    public static function getValueForObject($object, $key) {
+    public static function getValueForObject($object, $key, $fallbackDefaultValue = false)
+    {
         $getter = 'get' . ucfirst($key);
         $value = $object->$getter();
-//        if (null === $value) {
-//            $parent = PimcoreObjectService::hasInheritableParentObject($object);
-//            if (null !== $parent) {
-//                return self::getValueForObject($parent, $key);
-//            }
-//        }
+
+
+        if (!$value && $fallbackDefaultValue) {
+            $fd = $object->getClass()->getFieldDefinition($key);
+
+            if (method_exists($fd, 'getDefaultValue')) {
+                $value = $fd->getDefaultValue();
+            }
+        }
+
         return $value;
     }
 
-    public static function getValueForObjectToString($object, $key) {
+    public static function getValueForObjectToString($object, $key)
+    {
         return (string)self::getValueForObject($object, $key);
     }
 }
