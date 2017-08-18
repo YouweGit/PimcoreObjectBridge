@@ -540,10 +540,48 @@ pimcore.object.tags.objectBridge = Class.create(pimcore.object.tags.objects, {
                     this.duplicateCell(store, record, dataIndex, rowIndex);
                 }.bind(this, grid, column, colIndex, rowIndex, record)
             }));
+
+            menu.add(new Ext.menu.Item({
+                text: t('clear_cell'),
+                iconCls: 'pimcore_icon_delete',
+                handler: function (record, column, item) {
+                    this.clearCell(record, column.dataIndex);
+                }.bind(this, record, column)
+            }));
+
+            menu.add(new Ext.menu.Item({
+                text: t('clear_all_cells'),
+                iconCls: 'pimcore_icon_delete',
+                handler: function (grid, column, colIndex, rowIndex, record, item) {
+                    item.parentMenu.destroy();
+                    var dataIndex = column.dataIndex,
+                        store     = grid.getStore();
+                    this.clearCells(store, record, dataIndex, rowIndex);
+                }.bind(this, grid, column, colIndex, rowIndex, record)
+            }));
         }
 
         e.stopEvent();
         menu.showAt(e.getXY());
+    },
+    /**
+     * @param {Ext.data.Model} record
+     * @param {String} dataIndex The key name Class_Property
+     */
+    clearCell: function (record, dataIndex) {
+        record.set(dataIndex, null);
+    },
+    /**
+     * @param {Ext.data.Store} store
+     * @param {Ext.data.Model} record
+     * @param {String} dataIndex The key name Class_Property
+     * @param {Integer} rowIndex
+     */
+    clearCells: function (store, record, dataIndex, rowIndex) {
+        var spliceRecs = Ext.Array.slice(store.getData().items, rowIndex);
+        Ext.Array.each(spliceRecs, function (record) {
+            record.set(dataIndex, null);
+        }, this);
     },
     /**
      * @param store

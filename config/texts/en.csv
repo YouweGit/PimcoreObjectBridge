@@ -15,3 +15,5 @@ allow_delete,Allow delete
 bridge_prefix,Bridge prefix
 source_prefix,Source prefix
 decimal_precision,Decimal precision
+clear_cell,Clear
+clear_all_cells,Clear all
