@@ -165,7 +165,7 @@ pimcore.object.tags.objectBridge = Class.create(pimcore.object.tags.objects, {
                 allowBlank: !layout.mandatory,
                 typeAhead: true,
                 forceSelection: false,
-                minChars: 1,
+                minChars: 2,
                 hideTrigger: true,
                 mode: 'remote',
                 queryMode: 'remote',
