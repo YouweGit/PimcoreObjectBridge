@@ -171,6 +171,14 @@ pimcore.object.tags.objectBridge = Class.create(pimcore.object.tags.objects, {
                 queryMode: 'remote',
                 valueField: 'id',
                 displayField: 'display',
+                listeners : {
+                    keyup: function (e) {
+                        var pendingOperations = this.getStore().getProxy().pendingOperations;
+                        Ext.Object.eachValue(pendingOperations, function (pendingOperation) {
+                            pendingOperation.abort();
+                        });
+                    }  
+                },
                 store: Ext.create('Ext.data.JsonStore', {
                     autoLoad: false,
                     remoteSort: true,
