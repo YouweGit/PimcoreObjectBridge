@@ -177,7 +177,7 @@ pimcore.object.tags.objectBridge = Class.create(pimcore.object.tags.objects, {
                         Ext.Object.eachValue(pendingOperations, function (pendingOperation) {
                             pendingOperation.abort();
                         });
-                    }  
+                    }
                 },
                 store: Ext.create('Ext.data.JsonStore', {
                     autoLoad: false,
