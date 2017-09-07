@@ -171,6 +171,7 @@ pimcore.object.tags.objectBridge = Class.create(pimcore.object.tags.objects, {
                 queryMode: 'remote',
                 valueField: 'id',
                 displayField: 'display',
+                enableKeyEvents: true,
                 listeners : {
                     keyup: function (e) {
                         var pendingOperations = this.getStore().getProxy().pendingOperations;
