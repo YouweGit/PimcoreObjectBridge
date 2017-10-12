@@ -18,7 +18,7 @@ class Service
         $value = $object->$getter();
 
 
-        if (!$value && $fallbackDefaultValue) {
+        if (strlen((string)$value) === 0  && $fallbackDefaultValue) {
             $fd = $object->getClass()->getFieldDefinition($key);
 
             if (method_exists($fd, 'getDefaultValue')) {
