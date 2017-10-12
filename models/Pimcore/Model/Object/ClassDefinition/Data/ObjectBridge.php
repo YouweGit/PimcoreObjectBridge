@@ -744,7 +744,7 @@ class ObjectBridge extends Model\Object\ClassDefinition\Data\ObjectsMetadata
         $db = Db::get();
         $data = $this->getDataFromObjectParam($object, $params);
         $relations = $this->getDataForResource($data, $object, $params);
-
+        // $classId is initialized dinamicaly
         if (is_array($relations) && !empty($relations)) {
             foreach ($relations as $relation) {
                 $this->enrichRelation($object, $params, $classId, $relation);
