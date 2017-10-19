@@ -53,6 +53,7 @@ pimcore.object.tags.objectBridge = Class.create(pimcore.object.tags.objects, {
         for (i = 0; i < bridgeVisibleFields.length; i++) {
             fields.push(this.bridgeClassName + '_' + bridgeVisibleFields[i]);
         }
+
         this.store = Ext.create('Ext.data.JsonStore', {
 
             model: Ext.create('Ext.data.Model', {
@@ -100,14 +101,14 @@ pimcore.object.tags.objectBridge = Class.create(pimcore.object.tags.objects, {
         readOnly = (readOnly || layout.readOnly);
         prefix = ((prefix + ' ') || (''));
 
-        if (layout.fieldtype == "input" && !readOnly) {
+        if (layout.fieldtype === "input" && !readOnly) {
             editor = {
                 xtype: 'textfield',
                 allowBlank: !layout.mandatory
             };
             renderer = this.renderWithValidation;
         }
-        else if (layout.fieldtype == "numeric" && !readOnly) {
+        else if (layout.fieldtype === "numeric" && !readOnly) {
             renderer = this.renderWithValidation;
             var decimalPrecision = Ext.isNumeric(this.fieldConfig.decimalPrecision) ? this.fieldConfig.decimalPrecision : 2;
             editor = {
@@ -116,7 +117,7 @@ pimcore.object.tags.objectBridge = Class.create(pimcore.object.tags.objects, {
                 allowBlank: !layout.mandatory
             };
         }
-        else if (layout.fieldtype == "checkbox") {
+        else if (layout.fieldtype === "checkbox") {
             // There seems to be a problem with Ext checkbox column
             // As a workaround we will skip the composition of the element and return
             // it as soon as possible meaning all general stuff on bottom of
@@ -137,7 +138,7 @@ pimcore.object.tags.objectBridge = Class.create(pimcore.object.tags.objects, {
             return checkBoxColumn;
         }
 
-        else if (layout.fieldtype == "select" && !readOnly) {
+        else if (layout.fieldtype === "select" && !readOnly) {
             renderer = this.renderDisplayField;
             editor = Ext.create('Ext.form.ComboBox', {
                 allowBlank: !layout.mandatory,
@@ -158,8 +159,8 @@ pimcore.object.tags.objectBridge = Class.create(pimcore.object.tags.objects, {
                     data: layout.options
                 })
             });
-        } else if ((layout.fieldtype == "href" || layout.fieldtype == "hrefTypeahead") && !readOnly) {
-            renderer = this.renderDisplayField;
+        } else if ((layout.fieldtype === "href" || layout.fieldtype === "hrefTypeahead") && !readOnly) {
+            renderer = this.renderHrefWithValidation;
             minWidth = 200;
             editor = Ext.create('Ext.form.ComboBox', {
                 allowBlank: !layout.mandatory,
@@ -172,6 +173,10 @@ pimcore.object.tags.objectBridge = Class.create(pimcore.object.tags.objects, {
                 valueField: 'id',
                 displayField: 'display',
                 enableKeyEvents: true,
+                onFocus: function(e) {
+                    var me = this;
+                    me.setValue(null);
+                },
                 listeners : {
                     keyup: function (e) {
                         var pendingOperations = this.getStore().getProxy().pendingOperations;
@@ -202,7 +207,6 @@ pimcore.object.tags.objectBridge = Class.create(pimcore.object.tags.objects, {
         } else {
             // Ext.log(layout.fieldtype + ' is not implemented and will be read only');
         }
-
 
         var column = Ext.create('Ext.grid.column.Column', {
             text: prefix + '<br/>' + layout.title,
@@ -267,23 +271,6 @@ pimcore.object.tags.objectBridge = Class.create(pimcore.object.tags.objects, {
                     throw new Error(bridgeVisibleFields[i] + ' is missing from field definition, please add it under enrichLayoutDefinition at Pimcore\\Model\\Object\\ClassDefinition\\Data\\ObjectBridge');
                 }
                 var column = this.getColumnFromLayout(this.bridgeClassName, bridgeFieldLayout, readOnly, this.fieldConfig.bridgePrefix);
-
-                // Make sure that the ids of unique href fields are loaded
-                if ((bridgeFieldLayout.fieldtype == "href" || bridgeFieldLayout.fieldtype == "hrefTypeahead") && column && column.editor && column.editor.getStore()) {
-                    var objIds = [];
-
-                    Ext.each(this.store.data.items, function (item) {
-                        objIds.push(item.data[this.bridgeClassName + '_' + bridgeFieldLayout.name]);
-                    }, this);
-                    if (objIds) {
-                        var hrefStore = column.editor.getStore();
-                        var uniqueIds = Ext.Array.unique(objIds);
-                        hrefStore.load({
-                            params: {valueIds: implode(',', uniqueIds)}
-                        });
-
-                    }
-                }
                 columns.push(column);
             }
         }
@@ -655,6 +642,22 @@ pimcore.object.tags.objectBridge = Class.create(pimcore.object.tags.objects, {
 
                 if (rData.success) {
                     var newObject = {};
+
+                    // Here we add the default values for bridge object field
+                    var bridgeVisibleFields = this.getBridgeVisibleFieldsAsArray();
+
+                    for (var i = 0; i < bridgeVisibleFields.length; i++) {
+                        if (!empty(bridgeVisibleFields[i])) {
+                            var bridgeFieldLayout = this.fieldConfig.bridgeVisibleFieldDefinitions[bridgeVisibleFields[i]];
+                            if (!bridgeFieldLayout) {
+                                throw new Error(bridgeVisibleFields[i] + ' is missing from field definition, please add it under enrichLayoutDefinition at Pimcore\\Model\\Object\\ClassDefinition\\Data\\ObjectBridge');
+                            }
+                            if(Ext.isDefined(bridgeFieldLayout.default)){
+                                newObject[this.bridgeClassName + '_' + bridgeFieldLayout.name] = bridgeFieldLayout.default;
+                            }
+                        }
+                    }
+
                     for (key in rData.fields) {
                         if (in_array(key, sourceVisibleFields)) {
                             newObject[this.sourceClassName + '_' + key] = rData.fields[key];
@@ -732,6 +735,35 @@ pimcore.object.tags.objectBridge = Class.create(pimcore.object.tags.objects, {
         if (storeRecord) {
             return storeRecord.data[e.displayField];
         }
+    },
+
+    /**
+     * Custom rendered that shows a red border if the record field is invalid
+     * @param {string} value
+     * @param {Object} metaData
+     * @param {Ibood.DealImport.DealImportModel} record
+     * @returns {string}
+     */
+    renderHrefWithValidation: function (value, metaData, record) {
+
+
+        var editor = metaData.column.getEditor(record);
+
+        if (editor.allowBlank === false && (value === "" || value === null || value === false || typeof value === 'undefined')) {
+            metaData.tdCls = 'invalid-td-cell';
+        } else {
+            metaData.tdCls = '';
+        }
+
+        var storeRecord = editor.store.data.findBy(function (record) {
+            return record.data[editor.valueField] === value;
+        });
+
+        if (storeRecord) {
+            return storeRecord.data[editor.displayField];
+        }
+
+        return record.get(metaData.column.dataIndex + '_display');
     },
 
     getSourceVisibleFieldsAsArray: function () {

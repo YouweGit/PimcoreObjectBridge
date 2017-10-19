@@ -210,13 +210,20 @@ class ObjectBridge extends Model\Object\ClassDefinition\Data\ObjectsMetadata
                     $columnData[ $bridgeIdKey ] = $bridgeObject->getId();
 
                     foreach ($bridgeVisibleFieldsArray as $bridgeVisibleField) {
+
                         $fd = $bridgeClassDef->getFieldDefinition($bridgeVisibleField);
                         $key = ucfirst($bridgeClassDef->getName()) . '_' . $bridgeVisibleField;
                         if ($fd instanceof Object\ClassDefinition\Data\Href) {
                             $valueObject = Service::getValueForObject($bridgeObject, $bridgeVisibleField);
+
+                            // To avoid making too many requests to the server we add the display property on
+                            // run time but default path, but you can implement whatever to string method
+                            // Javascript will check if have a display property and use it
+
                             $columnData[ $key ] = $valueObject ? $valueObject->getId() : null;
+                            $columnData[ $key . '_display' ] = $valueObject ? (string)$valueObject : null;
                         } else {
-                            $columnData[ $key ] = Service::getValueForObject($bridgeObject, $bridgeVisibleField, true);
+                            $columnData[ $key ] = Service::getValueForObject($bridgeObject, $bridgeVisibleField);
                         }
                     }
 
@@ -965,6 +972,11 @@ class ObjectBridge extends Model\Object\ClassDefinition\Data\ObjectsMetadata
         $this->$fieldName[ $field ]['hidden'] = $hidden;
         $this->$fieldName[ $field ]['mandatory'] = $fd->getMandatory();
 
+        // Add default value if any is set
+        if (method_exists($fd, 'getDefaultValue') && strlen(strval($fd->getDefaultValue())) > 0) {
+            $this->$fieldName[ $field ]['default'] =  $fd->getDefaultValue();
+        }
+        // Dropdowns have options
         if ($fd instanceof Object\ClassDefinition\Data\Select) {
             $this->$fieldName[ $field ]['options'] = $fd->getOptions();
         }
