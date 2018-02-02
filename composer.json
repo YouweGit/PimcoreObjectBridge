@@ -1,19 +1,33 @@
 {
   "name": "youwe/pimcore-object-bridge",
   "description": "Allows editing an object inline that doesn't link directly many-to-many like",
-  "type": "pimcore-plugin",
+  "type": "pimcore-bundle",
   "require": {
-    "pimcore/installer-plugin": "^1.5",
-    "youwe/pimcore-href-typeahead": "0.*"
+    "pimcore/core-version": "~5.1.0"
   },
   "license": "MIT",
   "authors": [
     {
       "name": "Manea Eugen",
       "email": "e.manea@youwe.nl"
+    },{
+      "name": "Joris Ros",
+      "email": "j.ros@youwe.nl"
     },
     {
       "name": "Youwe"
     }
-  ]
+  ],
+  "autoload": {
+    "psr-4": {
+      "ObjectBridgeBundle\\": "/"
+    }
+  },
+  "extra": {
+    "pimcore": {
+      "bundles": [
+        "ObjectBridgeBundle\\ObjectBridgeBundle"
+      ]
+    }
+  }
 }
