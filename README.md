@@ -7,8 +7,9 @@ Cart -> ProductItem -> Product
 
 ### How to install
 
-1. Enable plugin
-2. Field should be available in field selector under relations
+1. Run ``composer require youwe/pimcore-object-bridge`` to receive the bundle
+2. Enable the bundle ``bin/console  pimcore:bundle:enable ObjectBridgeBundle``
+3. Then the field ``objectBridge`` should be available in field selector under relations (Add Data Component->Relation->objectBridge)
 
 Allowed in:
 * object: true,
