@@ -1,0 +1,8 @@
+
+# Pimcore
+pimcore:
+    objects:
+        class_definitions:
+            data:
+                map:
+                    objectBridge: \Pimcore\Model\DataObject\ClassDefinition\Data\Href
