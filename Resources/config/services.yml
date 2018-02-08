@@ -11,10 +11,10 @@ services:
 
     # controllers are imported separately to make sure they're public
     # and have a tag that allows actions to type-hint services
-   # ObjectBridgeBundle\Controller\:
-   #     resource: '../../Controller'
-   #     public: true
-   #     tags: ['controller.service_arguments']
+    ObjectBridgeBundle\Controller\:
+        resource: '../../Controller'
+        public: true
+        tags: ['controller.service_arguments']
 
 # add more services, or override services that need manual wiring
 #    ObjectBridgeBundle\ExampleClass:

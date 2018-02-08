@@ -1,0 +1,3 @@
+object_bridge_homepage:
+    path:     /
+    defaults: { _controller: ObjectBridgeBundle:Default:index }

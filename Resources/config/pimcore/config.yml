@@ -1,8 +1,6 @@
-
-# Pimcore
 pimcore:
     objects:
         class_definitions:
             data:
                 map:
-                    objectBridge: \Pimcore\Model\DataObject\ClassDefinition\Data\Href
+                    objectBridge: ObjectBridgeBundle\Model\Object\ClassDefinition\Data\ObjectBridge

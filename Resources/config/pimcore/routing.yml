@@ -1,0 +1,5 @@
+#object_bridge:
+#    resource: "@ObjectBridgeBundle/Controller/"
+#    type:     annotation
+#    prefix:   /
+#

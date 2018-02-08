@@ -1,22 +1,23 @@
 <?php
 
-namespace Pimcore\Model\Object\ClassDefinition\Data;
+namespace ObjectBridgeBundle\Model\Object\ClassDefinition\Data;
 
-use ObjectBridge\Object\Service;
+
 use PDO;
 use Pimcore\Logger;
 use Pimcore\Model;
 use Pimcore\Model\Object;
 use Pimcore\Model\Element;
-use Pimcore\Model\Object\AbstractObject;
-use Pimcore\Model\Object\ClassDefinition;
+use Pimcore\Model\DataObject\AbstractObject;
+use Pimcore\Model\DataObject\ClassDefinition;
 use Pimcore\Db;
-use Pimcore\Model\Object\Concrete;
-
+use Pimcore\Model\DataObject\Concrete;
+use Pimcore\Model\DataObject\Service;
+use ObjectBridgeBundle\Service\Object\ObjectBridgeService;
 /** @noinspection ClassOverridesFieldOfSuperClassInspection
  * We need to overwrite public properties because pimcore uses them for storing data
  */
-class ObjectBridge extends Model\Object\ClassDefinition\Data\ObjectsMetadata
+class ObjectBridge extends ClassDefinition\Data\ObjectsMetadata
 {
 
     /**
@@ -92,19 +93,20 @@ class ObjectBridge extends Model\Object\ClassDefinition\Data\ObjectsMetadata
 
     /**
      * Converts sql data to object
-     * @see Object\ClassDefinition\Data::getDataFromResource
+     * @see ClassDefinition\Data::getDataFromResource
      * @param array $data
-     * @param null|Model\Object\AbstractObject $object
+     * @param null|AbstractObject $object
      * @param mixed $params
      * @return array
      */
     public function getDataFromResource($data, $object = null, $params = [])
     {
         $objects = [];
+        \Pimcore\Log\Simple::log('objectbridge', var_export($data,true));
         if (is_array($data) && count($data) > 0) {
             foreach ($data as $objectData) {
                 $o = AbstractObject::getById($objectData['dest_id']);
-                if ($o instanceof Object\Concrete) {
+                if ($o instanceof Concrete) {
                     $objects[] = $o;
                 }
             }
@@ -115,9 +117,9 @@ class ObjectBridge extends Model\Object\ClassDefinition\Data\ObjectsMetadata
     }
 
     /**
-     * @see Object\ClassDefinition\Data::getDataForResource
+     * @see ClassDefinition\Data::getDataForResource
      * @param array $data
-     * @param null|Model\Object\AbstractObject $object
+     * @param null|AbstractObject $object
      * @param mixed $params
      * @return array
      */
@@ -128,7 +130,7 @@ class ObjectBridge extends Model\Object\ClassDefinition\Data\ObjectsMetadata
         if (is_array($data) && count($data) > 0) {
             $counter = 1;
             foreach ($data as $objectData) {
-                if ($objectData instanceof Object\Concrete) {
+                if ($objectData instanceof Concrete) {
                     $return[] = [
                         'dest_id'   => $objectData->getId(),
                         'type'      => 'object',
@@ -184,9 +186,9 @@ class ObjectBridge extends Model\Object\ClassDefinition\Data\ObjectsMetadata
     }
 
     /**
-     * @see Object\ClassDefinition\Data::getDataForEditmode
+     * @see ClassDefinition\Data::getDataForEditmode
      * @param array $data
-     * @param null|Model\Object\AbstractObject $object
+     * @param null|AbstractObject $object
      * @param mixed $params
      * @return array
      * @throws \Exception
@@ -203,7 +205,7 @@ class ObjectBridge extends Model\Object\ClassDefinition\Data\ObjectsMetadata
 
             foreach ($data as $bridgeObject) {
 
-                if ($bridgeObject instanceof Object\Concrete) {
+                if ($bridgeObject instanceof Concrete) {
 
                     $bridgeIdKey = ucfirst($bridgeClassDef->getName()) . '_id';
                     $columnData = [];
@@ -213,8 +215,8 @@ class ObjectBridge extends Model\Object\ClassDefinition\Data\ObjectsMetadata
 
                         $fd = $bridgeClassDef->getFieldDefinition($bridgeVisibleField);
                         $key = ucfirst($bridgeClassDef->getName()) . '_' . $bridgeVisibleField;
-                        if ($fd instanceof Object\ClassDefinition\Data\Href) {
-                            $valueObject = Service::getValueForObject($bridgeObject, $bridgeVisibleField);
+                        if ($fd instanceof ClassDefinition\Data\Href) {
+                            $valueObject = ObjectBridgeService::getValueForObject($bridgeObject, $bridgeVisibleField);
 
                             // To avoid making too many requests to the server we add the display property on
                             // run time but default path, but you can implement whatever to string method
@@ -223,14 +225,14 @@ class ObjectBridge extends Model\Object\ClassDefinition\Data\ObjectsMetadata
                             $columnData[ $key ] = $valueObject ? $valueObject->getId() : null;
                             $columnData[ $key . '_display' ] = $valueObject ? (string)$valueObject : null;
                         } else {
-                            $columnData[ $key ] = Service::getValueForObject($bridgeObject, $bridgeVisibleField);
+                            $columnData[ $key ] = ObjectBridgeService::getValueForObject($bridgeObject, $bridgeVisibleField);
                         }
                     }
 
                     $bridgeFieldGetter = 'get' . $this->getBridgeField();
                     $sourceObject = $bridgeObject->$bridgeFieldGetter();
 
-                    if (!$sourceObject instanceof Object\Concrete) {
+                    if (!$sourceObject instanceof Concrete) {
                         throw new \RuntimeException(sprintf('Database has an inconsistency, please remove object with id %s to fix the error', $bridgeObject->getId()));
                     }
 
@@ -242,11 +244,11 @@ class ObjectBridge extends Model\Object\ClassDefinition\Data\ObjectsMetadata
                         $fd = $sourceClassDef->getFieldDefinition($sourceVisibleField);
                         $key = ucfirst($sourceClassDef->getName()) . '_' . $sourceVisibleField;
 
-                        if ($fd instanceof Object\ClassDefinition\Data\Href) {
-                            $valueObject = Service::getValueForObjectToString($sourceObject, $sourceVisibleField);
+                        if ($fd instanceof ClassDefinition\Data\Href) {
+                            $valueObject = ObjectBridgeService::getValueForObjectToString($sourceObject, $sourceVisibleField);
                             $columnData[ $key ] = $valueObject;
                         } else {
-                            $columnData[ $key ] = Service::getValueForObject($sourceObject, $sourceVisibleField);
+                            $columnData[ $key ] = ObjectBridgeService::getValueForObject($sourceObject, $sourceVisibleField);
                         }
                     }
                     $return[] = $columnData;
@@ -258,7 +260,7 @@ class ObjectBridge extends Model\Object\ClassDefinition\Data\ObjectsMetadata
     }
 
     /**
-     * @see Model\Object\ClassDefinition\Data::getDataFromEditmode
+     * @see ClassDefinition\Data::getDataFromEditmode
      * @param array $data
      * @param null|Concrete $object
      * @param mixed $params
@@ -293,10 +295,10 @@ class ObjectBridge extends Model\Object\ClassDefinition\Data\ObjectsMetadata
 
 
                 $sourceObject = $sourceClass::getById($sourceId);
-                /** @var Object\Concrete $bridgeObject */
+                /** @var Concrete $bridgeObject */
                 if (!$bridgeObjectId) {
                     $bridgeObject = new $bridgeClass;
-                    $parent = Object\Service::createFolderByPath($this->bridgeFolder);
+                    $parent = Model\DataObject\Service::createFolderByPath($this->bridgeFolder);
                     if (!$parent instanceof AbstractObject) {
                         throw new \InvalidArgumentException(sprintf('Parent not found at "%s" please check your object bridge configuration "Bridge folder"', $this->bridgeFolder));
                     }
@@ -304,7 +306,7 @@ class ObjectBridge extends Model\Object\ClassDefinition\Data\ObjectsMetadata
                     $bridgeObject->setKey($object->getId() . '_' . $sourceObject->getId());
                     $bridgeObject->setPublished(false);
                     // Make sure its unique else saving will throw an error
-                    $bridgeObject->setKey(Object\Service::getUniqueKey($bridgeObject));
+                    $bridgeObject->setKey(Model\DataObject\Service::getUniqueKey($bridgeObject));
                 } else {
                     $bridgeObject = $bridgeClass::getById($bridgeObjectId);
                 }
@@ -321,7 +323,7 @@ class ObjectBridge extends Model\Object\ClassDefinition\Data\ObjectsMetadata
                     if (array_key_exists($key, $objectData)) {
                         $setter = 'set' . ucfirst($bridgeVisibleField);
 
-                        if ($fd instanceof Object\ClassDefinition\Data\Href) {
+                        if ($fd instanceof ClassDefinition\Data\Href) {
                             $valueObject = $this->getObjectForHref($fd, $objectData[ $key ]);
                             $bridgeObject->$setter($valueObject);
                         } else {
@@ -518,9 +520,9 @@ class ObjectBridge extends Model\Object\ClassDefinition\Data\ObjectsMetadata
     }
 
     /**
-     * @see Object\ClassDefinition\Data::getVersionPreview
+     * @see ClassDefinition\Data::getVersionPreview
      * @param array $data
-     * @param null|Object\AbstractObject $object
+     * @param null|AbstractObject $object
      * @param mixed $params
      * @return string
      */
@@ -553,18 +555,18 @@ class ObjectBridge extends Model\Object\ClassDefinition\Data\ObjectsMetadata
             throw new Element\ValidationException('Empty mandatory field [ ' . $this->getName() . ' ]');
         }
         if (is_array($data)) {
-            /** @var Object\Concrete $objectBridge */
+            /** @var Concrete $objectBridge */
             foreach ($data as $objectBridge) {
                 $bridgeClassFullName = $this->getBridgeFullClassName();
                 if (!($objectBridge instanceof $bridgeClassFullName)) {
                     throw new Element\ValidationException('Expected ' . $bridgeClassFullName);
                 }
                 foreach ($objectBridge->getClass()->getFieldDefinitions() as $fieldDefinition) {
-                    $fieldDefinition->checkValidity(Service::getValueForObject($objectBridge, $fieldDefinition->getName()), $omitMandatoryCheck);
+                    $fieldDefinition->checkValidity(ObjectBridgeService::getValueForObject($objectBridge, $fieldDefinition->getName()), $omitMandatoryCheck);
                 }
 
-                if (!($objectBridge instanceof Object\Concrete) || $objectBridge->getClassName() !== $this->getBridgeAllowedClassName()) {
-                    $id = $objectBridge instanceof Object\Concrete ? $objectBridge->getId() : '??';
+                if (!($objectBridge instanceof Concrete) || $objectBridge->getClassName() !== $this->getBridgeAllowedClassName()) {
+                    $id = $objectBridge instanceof Concrete ? $objectBridge->getId() : '??';
                     throw new Element\ValidationException('Invalid object relation to object [' . $id . '] in field ' . $this->getName(), null, null);
                 }
             }
@@ -575,7 +577,7 @@ class ObjectBridge extends Model\Object\ClassDefinition\Data\ObjectsMetadata
      * Default functionality from ClassDefinition\Data\Object::getFromCsvImport
      * Converts object data to a simple string value or CSV Export
      * @abstract
-     * @param Object\AbstractObject $object
+     * @param AbstractObject $object
      * @param array $params
      * @return string
      */
@@ -601,7 +603,7 @@ class ObjectBridge extends Model\Object\ClassDefinition\Data\ObjectsMetadata
      * Default functionality from ClassDefinition\Data\Object::getFromCsvImport
      * Will import comma separated paths
      * @param mixed $importValue
-     * @param null|Model\Object\AbstractObject $object
+     * @param null|AbstractObject $object
      * @param mixed $params
      * @return array|mixed
      */
@@ -653,7 +655,7 @@ class ObjectBridge extends Model\Object\ClassDefinition\Data\ObjectsMetadata
 
         if (is_array($data) && count($data) > 0) {
             foreach ($data as $o) {
-                if ($o instanceof Object\AbstractObject) {
+                if ($o instanceof AbstractObject) {
                     $dependencies[ 'object_' . $o->getId() ] = [
                         'id'   => $o->getId(),
                         'type' => 'object',
@@ -667,7 +669,7 @@ class ObjectBridge extends Model\Object\ClassDefinition\Data\ObjectsMetadata
 
     /**
      * Default functionality from ClassDefinition\Data\Object::getForWebserviceExport
-     * @param Object\AbstractObject $object
+     * @param AbstractObject $object
      * @param mixed $params
      * @return array|mixed|null
      */
@@ -723,7 +725,7 @@ class ObjectBridge extends Model\Object\ClassDefinition\Data\ObjectsMetadata
                     $relatedObject = AbstractObject::getById($id);
                 }
 
-                if ($relatedObject instanceof Object\AbstractObject) {
+                if ($relatedObject instanceof AbstractObject) {
                     $relatedObjects[] = $relatedObject;
                 } else {
                     if (!$idMapper || !$idMapper->ignoreMappingFailures()) {
@@ -784,7 +786,7 @@ class ObjectBridge extends Model\Object\ClassDefinition\Data\ObjectsMetadata
     public function preGetData($object, $params = [])
     {
         $data = null;
-        if ($object instanceof Object\Concrete) {
+        if ($object instanceof Concrete) {
             $data = $object->{$this->getName()};
             if ($this->getLazyLoading() && !in_array($this->getName(), $object->getO__loadedLazyFields(), true)) {
                 $data = $this->load($object, ['force' => true]);
@@ -794,16 +796,16 @@ class ObjectBridge extends Model\Object\ClassDefinition\Data\ObjectsMetadata
                     $object->$setter($data);
                 }
             }
-        } elseif ($object instanceof Object\Localizedfield) {
+        } elseif ($object instanceof Localizedfield) {
             $data = $params['data'];
-        } elseif ($object instanceof Object\Fieldcollection\Data\AbstractData) {
+        } elseif ($object instanceof Model\DataObject\Fieldcollection\Data\AbstractData) {
             $data = $object->{$this->getName()};
-        } elseif ($object instanceof Object\Objectbrick\Data\AbstractData) {
+        } elseif ($object instanceof Model\DataObject\Objectbrick\Data\AbstractData) {
             $data = $object->{$this->getName()};
         }
 
 
-        if (is_array($data) && Object\AbstractObject::doHideUnpublished()) {
+        if (is_array($data) && AbstractObject::doHideUnpublished()) {
             $publishedList = [];
             foreach ($data as $listElement) {
                 if (Element\Service::isPublished($listElement)) {
@@ -863,9 +865,9 @@ class ObjectBridge extends Model\Object\ClassDefinition\Data\ObjectsMetadata
     }
 
     /**
-     * @param Object\ClassDefinition\Data|self $masterDefinition
+     * @param ClassDefinition\Data|self $masterDefinition
      */
-    public function synchronizeWithMasterDefinition(Object\ClassDefinition\Data $masterDefinition)
+    public function synchronizeWithMasterDefinition(ClassDefinition\Data $masterDefinition)
     {
         $this->sourceAllowedClassName = $masterDefinition->sourceAllowedClassName;
         $this->sourceVisibleFields = $masterDefinition->sourceVisibleFields;
@@ -909,7 +911,7 @@ class ObjectBridge extends Model\Object\ClassDefinition\Data\ObjectsMetadata
                 /** @var ClassDefinition $localizedfields */
                 if ($localizedfields = $sourceClass->getFieldDefinitions()['localizedfields']) {
                     /**
-                     * @var Object\ClassDefinition\Data $fd
+                     * @var ClassDefinition\Data $fd
                      */
                     if ($fd = $localizedfields->getFieldDefinition($field)) {
                         $fieldFound = true;
@@ -934,7 +936,7 @@ class ObjectBridge extends Model\Object\ClassDefinition\Data\ObjectsMetadata
             if (!$fd) {
                 $fieldFound = false;
                 if ($localizedfields = $bridgeClass->getFieldDefinitions()['localizedfields']) {
-                    /** @var Object\ClassDefinition\Data $fd */
+                    /** @var ClassDefinition\Data $fd */
                     if ($fd = $localizedfields->getFieldDefinition($field)) {
                         $fieldFound = true;
                         $isHidden = $this->bridgeFieldIsHidden($field);
@@ -958,7 +960,7 @@ class ObjectBridge extends Model\Object\ClassDefinition\Data\ObjectsMetadata
     /**
      * @param string $fieldName
      * ex . sourceVisibleFieldDefinitions or bridgeVisibleFieldDefinitions
-     * @param Object\ClassDefinition\Data $fd
+     * @param ClassDefinition\Data $fd
      * @param string $field
      * @param bool $readOnly
      * @param bool $hidden
@@ -1013,7 +1015,7 @@ class ObjectBridge extends Model\Object\ClassDefinition\Data\ObjectsMetadata
      * When this field is localized or included in a object brick this function will be called
      * Encode value for packing it into a single column.
      * @param array $value
-     * @param Model\Object\AbstractObject $object
+     * @param AbstractObject $object
      * @param mixed $params
      * @return mixed
      */
@@ -1040,7 +1042,7 @@ class ObjectBridge extends Model\Object\ClassDefinition\Data\ObjectsMetadata
      * When this field is localized or included in a object brick this function will be called
      * Used to transform back to object data stored in marshal
      * @param array $value
-     * @param Model\Object\AbstractObject $object
+     * @param AbstractObject $object
      * @param mixed $params
      * @return mixed
      */

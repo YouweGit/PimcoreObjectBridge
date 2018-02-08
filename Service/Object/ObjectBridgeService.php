@@ -1,14 +1,16 @@
 <?php
 
-namespace ObjectBridge\Object;
+namespace ObjectBridgeBundle\Service\Object;
 
+use Pimcore\Model\DataObject\AbstractObject;
+use Pimcore\Model\DataObject\Concrete;
 use Pimcore\Model\Object;
 
-class Service
+class ObjectBridgeService
 {
     /**
      *
-     * @param Object\AbstractObject|Object\Concrete $object
+     * @param AbstractObject|Concrete $object
      * @param string $key
      * @return mixed
      * Don't add here any default value because it will display wrong info to the user,
