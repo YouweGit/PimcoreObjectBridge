@@ -353,6 +353,11 @@ pimcore.object.tags.objectBridge = Class.create(pimcore.object.tags.objects, {
             {
                 xtype: "tbtext",
                 text: "<b>" + this.fieldConfig.title + "</b>"
+            },
+            {
+                xtype: "button",
+                iconCls: "pimcore_icon_search",
+                handler: this.openSearchEditor.bind(this)
             }];
 
         if (!readOnly) {
