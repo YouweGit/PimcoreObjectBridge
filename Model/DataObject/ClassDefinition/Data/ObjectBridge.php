@@ -11,7 +11,7 @@ use Pimcore\Model\DataObject\AbstractObject;
 use Pimcore\Model\DataObject\ClassDefinition;
 use Pimcore\Db;
 use Pimcore\Model\DataObject\Concrete;
-use ObjectBridgeBundle\Service\Object\ObjectBridgeService;
+use ObjectBridgeBundle\Service\DataObject\ObjectBridgeService;
 
 /** @noinspection ClassOverridesFieldOfSuperClassInspection
  * We need to overwrite public properties because pimcore uses them for storing data

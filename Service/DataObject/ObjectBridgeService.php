@@ -1,10 +1,10 @@
 <?php
 
-namespace ObjectBridgeBundle\Service\Object;
+namespace ObjectBridgeBundle\Service\DataObject;
 
 use Pimcore\Model\DataObject\AbstractObject;
 use Pimcore\Model\DataObject\Concrete;
-use Pimcore\Model\DataObject;
+
 
 class ObjectBridgeService
 {
