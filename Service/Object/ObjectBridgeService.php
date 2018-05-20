@@ -4,7 +4,7 @@ namespace ObjectBridgeBundle\Service\Object;
 
 use Pimcore\Model\DataObject\AbstractObject;
 use Pimcore\Model\DataObject\Concrete;
-use Pimcore\Model\Object;
+use Pimcore\Model\DataObject;
 
 class ObjectBridgeService
 {

@@ -1,19 +1,18 @@
 <?php
 
-namespace ObjectBridgeBundle\Model\Object\ClassDefinition\Data;
+namespace ObjectBridgeBundle\Model\DataObject\ClassDefinition\Data;
 
 
 use PDO;
 use Pimcore\Logger;
 use Pimcore\Model;
-use Pimcore\Model\Object;
 use Pimcore\Model\Element;
 use Pimcore\Model\DataObject\AbstractObject;
 use Pimcore\Model\DataObject\ClassDefinition;
 use Pimcore\Db;
 use Pimcore\Model\DataObject\Concrete;
-use Pimcore\Model\DataObject\Service;
 use ObjectBridgeBundle\Service\Object\ObjectBridgeService;
+
 /** @noinspection ClassOverridesFieldOfSuperClassInspection
  * We need to overwrite public properties because pimcore uses them for storing data
  */
@@ -64,7 +63,7 @@ class ObjectBridge extends ClassDefinition\Data\ObjectsMetadata
      * @var string
      */
 
-    public $phpdocType = "\\Pimcore\\Model\\Object\\AbstractObject[]";
+    public $phpdocType = "\\Pimcore\\Model\\DataObject\\AbstractObject[]";
 
     /** @var string */
     public $sourceVisibleFieldDefinitions;
@@ -426,7 +425,7 @@ class ObjectBridge extends ClassDefinition\Data\ObjectsMetadata
      */
     private function getSourceFullClassName()
     {
-        return '\\Pimcore\\Model\\Object\\' . ucfirst($this->sourceAllowedClassName);
+        return '\\Pimcore\\Model\\DataObject\\' . ucfirst($this->sourceAllowedClassName);
     }
 
     /**
@@ -434,7 +433,7 @@ class ObjectBridge extends ClassDefinition\Data\ObjectsMetadata
      */
     private function getBridgeFullClassName()
     {
-        return '\\Pimcore\\Model\\Object\\' . ucfirst($this->bridgeAllowedClassName);
+        return '\\Pimcore\\Model\\DataObject\\' . ucfirst($this->bridgeAllowedClassName);
     }
 
     /**
@@ -470,7 +469,7 @@ class ObjectBridge extends ClassDefinition\Data\ObjectsMetadata
         if ($class && is_array($class) && array_key_exists('classes', $class)) {
             $class = $class['classes'];
             /** @var AbstractObject $className */
-            $className = '\\Pimcore\\Model\\Object\\' . $class;
+            $className = '\\Pimcore\\Model\\DataObject\\' . $class;
 
             return $className::getById($value);
         }
@@ -993,9 +992,10 @@ class ObjectBridge extends ClassDefinition\Data\ObjectsMetadata
      */
     private function setSystemFieldDefinition($fieldName, $field, $hidden)
     {
-        $t = \Zend_Registry::get('Zend_Translate');
+        /** @var  $translation */
+        $translation = \Pimcore::getContainer()->get('translator');
         $this->$fieldName[ $field ]['name'] = $field;
-        $this->$fieldName[ $field ]['title'] = $this->formatTitle($t->translate($field));
+        $this->$fieldName[ $field ]['title'] = $this->formatTitle($translation->trans($field));
         $this->$fieldName[ $field ]['fieldtype'] = 'input';
         $this->$fieldName[ $field ]['readOnly'] = true;
         $this->$fieldName[ $field ]['hidden'] = $hidden;

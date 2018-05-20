@@ -3,4 +3,4 @@ pimcore:
         class_definitions:
             data:
                 map:
-                    objectBridge: ObjectBridgeBundle\Model\Object\ClassDefinition\Data\ObjectBridge
+                    objectBridge: ObjectBridgeBundle\Model\DataObject\ClassDefinition\Data\ObjectBridge
