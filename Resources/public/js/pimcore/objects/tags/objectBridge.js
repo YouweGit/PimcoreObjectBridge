@@ -209,8 +209,16 @@ pimcore.object.tags.objectBridge = Class.create(pimcore.object.tags.objects, {
             // Ext.log(layout.fieldtype + ' is not implemented and will be read only');
         }
 
+        //Bug fix for different title sizes (https://github.com/YouweGit/PimcoreObjectBridge/issues/8) still BC
+        var title = "";
+        if(prefix.length > 1){
+            title = prefix + '<br/>' + layout.title;
+        }else{
+            title = layout.title;
+        }
+
         var column = Ext.create('Ext.grid.column.Column', {
-            text: prefix + '<br/>' + layout.title,
+            text: title,
             dataIndex: classNameText + '_' + layout.name,
             editor: editor,
             renderer: renderer,
