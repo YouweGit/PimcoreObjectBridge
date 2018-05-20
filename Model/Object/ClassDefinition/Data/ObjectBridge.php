@@ -6,7 +6,7 @@ namespace ObjectBridgeBundle\Model\Object\ClassDefinition\Data;
 use PDO;
 use Pimcore\Logger;
 use Pimcore\Model;
-use Pimcore\Model\Object;
+use Pimcore\Model\DataObject;
 use Pimcore\Model\Element;
 use Pimcore\Model\DataObject\AbstractObject;
 use Pimcore\Model\DataObject\ClassDefinition;
