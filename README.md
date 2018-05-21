@@ -100,7 +100,7 @@ Car
 
 A certain car can be present in multiple garages, in different quantities.
 
-
+See object bulk dump structure [here](Docs/json/structure_bridge.json)
 
 ### Todo's:
 
