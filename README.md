@@ -28,10 +28,6 @@ Bridge object editing fields:
 
 *If not in list above then field will be read-only*
 
-### Screenshot
-
-![Screenshot of the bridge](Docs/img/screenshot.png)
-
 ### Field specific settings
 
 <dl>
@@ -105,6 +101,12 @@ Car
 A certain car can be present in multiple garages, in different quantities.
 
 See object bulk dump structure [here](Docs/json/structure_bridge.json)
+
+
+### Screenshot
+
+![Screenshot of the bridge](Docs/img/screenshot.png)
+
 
 ### Todo's:
 
