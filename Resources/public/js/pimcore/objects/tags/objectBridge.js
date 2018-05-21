@@ -285,40 +285,42 @@ pimcore.object.tags.objectBridge = Class.create(pimcore.object.tags.objects, {
         }
 
         if (!readOnly) {
-            columns.push({
-                xtype: 'actioncolumn',
-                width: 40,
-                items: [
-                    {
-                        tooltip: t('up'),
-                        icon: '/pimcore/static6/img/flat-color-icons/up.svg',
-                        handler: function (grid, rowIndex) {
-                            if (rowIndex > 0) {
-                                var rec = grid.getStore().getAt(rowIndex);
-                                grid.getStore().removeAt(rowIndex);
-                                grid.getStore().insert(rowIndex - 1, [rec]);
-                            }
-                        }.bind(this)
-                    }
-                ]
-            });
-            columns.push({
-                xtype: 'actioncolumn',
-                width: 40,
-                items: [
-                    {
-                        tooltip: t('down'),
-                        icon: '/pimcore/static6/img/flat-color-icons/down.svg',
-                        handler: function (grid, rowIndex) {
-                            if (rowIndex < (grid.getStore().getCount() - 1)) {
-                                var rec = grid.getStore().getAt(rowIndex);
-                                grid.getStore().removeAt(rowIndex);
-                                grid.getStore().insert(rowIndex + 1, [rec]);
-                            }
-                        }.bind(this)
-                    }
-                ]
-            });
+            if(!this.fieldConfig.disableUpDown) {
+                columns.push({
+                    xtype: 'actioncolumn',
+                    width: 40,
+                    items: [
+                        {
+                            tooltip: t('up'),
+                            icon: '/pimcore/static6/img/flat-color-icons/up.svg',
+                            handler: function (grid, rowIndex) {
+                                if (rowIndex > 0) {
+                                    var rec = grid.getStore().getAt(rowIndex);
+                                    grid.getStore().removeAt(rowIndex);
+                                    grid.getStore().insert(rowIndex - 1, [rec]);
+                                }
+                            }.bind(this)
+                        }
+                    ]
+                });
+                columns.push({
+                    xtype: 'actioncolumn',
+                    width: 40,
+                    items: [
+                        {
+                            tooltip: t('down'),
+                            icon: '/pimcore/static6/img/flat-color-icons/down.svg',
+                            handler: function (grid, rowIndex) {
+                                if (rowIndex < (grid.getStore().getCount() - 1)) {
+                                    var rec = grid.getStore().getAt(rowIndex);
+                                    grid.getStore().removeAt(rowIndex);
+                                    grid.getStore().insert(rowIndex + 1, [rec]);
+                                }
+                            }.bind(this)
+                        }
+                    ]
+                });
+            }
         }
 
         columns.push({
@@ -389,7 +391,7 @@ pimcore.object.tags.objectBridge = Class.create(pimcore.object.tags.objects, {
         var plugins = [
             Ext.create('Ext.grid.plugin.CellEditing', {
                 clicksToEdit: 1
-            })
+            }),'pimcore.gridfilters'
         ];
 
         this.component = Ext.create('Ext.grid.Panel', {
