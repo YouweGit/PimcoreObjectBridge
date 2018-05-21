@@ -229,6 +229,13 @@ pimcore.object.classes.data.objectBridge = Class.create(pimcore.object.classes.d
                 value: t('lazy_loading_warning'),
                 cls: "pimcore_extra_label_bottom",
                 style: "color:red; font-weight: bold;"
+            },
+            {
+                xtype: "checkbox",
+                fieldLabel: t("disable_up_down"),
+                name: "disableUpDown",
+                checked: this.datax.disableUpDown,
+                disabled: this.isInCustomLayoutEditor()
             }
         ];
     },
@@ -691,6 +698,7 @@ pimcore.object.classes.data.objectBridge = Class.create(pimcore.object.classes.d
                 bridgePrefix: source.datax.bridgePrefix,
                 remoteOwner: source.datax.remoteOwner,
                 lazyLoading: source.datax.lazyLoading,
+                disableUpDown: source.datax.disableUpDown,
                 classes: source.datax.classes
             });
         }

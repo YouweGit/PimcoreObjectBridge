@@ -90,6 +90,9 @@ class ObjectBridge extends ClassDefinition\Data\ObjectsMetadata
     /** @var string */
     public $decimalPrecision;
 
+    /** @var boolean */
+    public $disableUpDown;
+
     /**
      * Converts sql data to object
      * @see ClassDefinition\Data::getDataFromResource
@@ -882,6 +885,7 @@ class ObjectBridge extends ClassDefinition\Data\ObjectsMetadata
         $this->allowCreate = $masterDefinition->allowCreate;
         $this->allowDelete = $masterDefinition->allowDelete;
         $this->decimalPrecision = $masterDefinition->decimalPrecision;
+        $this->disableUpDown = $masterDefinition->disableUpDown;
     }
 
     /**
@@ -1378,5 +1382,19 @@ class ObjectBridge extends ClassDefinition\Data\ObjectsMetadata
         $this->decimalPrecision = $decimalPrecision;
     }
 
+    /**
+     * @param boolean $value
+     */
+    public function setDisableUpDown($value)
+    {
+        $this->disableUpDown = $value;
+    }
 
+    /**
+     * @return boolean
+     */
+    public function getdisableUpDown()
+    {
+        return $this->disableUpDown;
+    }
 }
