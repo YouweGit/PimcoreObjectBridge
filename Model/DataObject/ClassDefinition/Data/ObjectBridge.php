@@ -338,8 +338,7 @@ class ObjectBridge extends ClassDefinition\Data\ObjectsMetadata
                 $bridgeFieldSetter = 'set' . ucfirst($this->bridgeField);
                 $bridgeObject->$bridgeFieldSetter($sourceObject);
                 $bridgeObject->setOmitMandatoryCheck(true);
-                // because the main object might not be published yet - do not publish the bridge
-                $bridgeObject->setPublished(false);
+                $bridgeObject->setPublished($object->getPublished());
                 $bridgeObject->save();
 
                 if ($bridgeObject && $bridgeObject->getClassName() === $this->getBridgeAllowedClassName()) {
