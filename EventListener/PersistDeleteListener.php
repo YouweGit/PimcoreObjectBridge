@@ -53,9 +53,12 @@ class PersistDeleteListener
     private function deleteSourceObjectsIfHasField($target)
     {
         $classDef = ClassDefinition::getById($target->getClassId());
-        foreach ($classDef->getFieldDefinitions() as $fieldDefinition) {
-            if ($fieldDefinition instanceof ObjectBridge) {
-                $this->deleteBridgeDependencies($target, $fieldDefinition);
+
+        if($classDef) {
+            foreach ($classDef->getFieldDefinitions() as $fieldDefinition) {
+                if ($fieldDefinition instanceof ObjectBridge) {
+                    $this->deleteBridgeDependencies($target, $fieldDefinition);
+                }
             }
         }
     }
@@ -69,8 +72,10 @@ class PersistDeleteListener
         $fullClassName = '\\Pimcore\\Model\\DataObject\\' . $fieldDefinition->sourceAllowedClassName;
         if ($target instanceof $fullClassName) {
             $dependencies = Dependency::getBySourceId($target->getId(), "object");
-            foreach ($dependencies->getRequiredBy() as $dependency) {
-                $this->deleteBridgeIfObject($fieldDefinition, $dependency);
+            if($dependencies) {
+                foreach ($dependencies->getRequiredBy() as $dependency) {
+                    $this->deleteBridgeIfObject($fieldDefinition, $dependency);
+                }
             }
         }
     }
@@ -83,9 +88,11 @@ class PersistDeleteListener
         $classDefinitions = new ClassDefinition\Listing();
         /** @var ClassDefinition $classDef */
         foreach ($classDefinitions->load() as $classDef) {
-            foreach ($classDef->getFieldDefinitions() as $fieldDefinition) {
-                if ($fieldDefinition instanceof ObjectBridge) {
-                    $this->deleteDependenciesForSource($fieldDefinition, $target);
+            if($classDef) {
+                foreach ($classDef->getFieldDefinitions() as $fieldDefinition) {
+                    if ($fieldDefinition instanceof ObjectBridge) {
+                        $this->deleteDependenciesForSource($fieldDefinition, $target);
+                    }
                 }
             }
         }
