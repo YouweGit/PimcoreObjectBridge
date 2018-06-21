@@ -980,8 +980,9 @@ class ObjectBridge extends ClassDefinition\Data\ObjectsMetadata
         if (method_exists($fd, 'getDefaultValue') && strlen(strval($fd->getDefaultValue())) > 0) {
             $this->$fieldName[ $field ]['default'] =  $fd->getDefaultValue();
         }
+        
         // Dropdowns have options
-        if ($fd instanceof Object\ClassDefinition\Data\Select) {
+        if ($fd instanceof ClassDefinition\Data\Select) {
             $this->$fieldName[ $field ]['options'] = $fd->getOptions();
         }
     }
