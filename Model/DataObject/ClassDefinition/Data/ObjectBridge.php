@@ -328,10 +328,16 @@ class ObjectBridge extends ClassDefinition\Data\ObjectsMetadata
                         if ($fd instanceof ClassDefinition\Data\Href) {
                             $valueObject = $this->getObjectForHref($fd, $objectData[ $key ]);
                             $bridgeObject->$setter($valueObject);
-                        } else {
+                        }elseif($fd instanceof ClassDefinition\Data\Date){
+                            if(!empty($objectData[$key]["date"]) && is_string($objectData[$key]["date"])){
+                                $bridgeObject->$setter(new \DateTime($objectData[ $key ]["date"]));
+                            }elseif(!empty($objectData[$key]) && is_string($objectData[$key])){
+                                $bridgeObject->$setter(new \DateTime($objectData[ $key ]));
+                            }
+                        }
+                        else {
                             $bridgeObject->$setter($objectData[ $key ]);
                         }
-
                     }
                 }
 
@@ -980,7 +986,7 @@ class ObjectBridge extends ClassDefinition\Data\ObjectsMetadata
         if (method_exists($fd, 'getDefaultValue') && strlen(strval($fd->getDefaultValue())) > 0) {
             $this->$fieldName[ $field ]['default'] =  $fd->getDefaultValue();
         }
-        
+
         // Dropdowns have options
         if ($fd instanceof ClassDefinition\Data\Select) {
             $this->$fieldName[ $field ]['options'] = $fd->getOptions();
