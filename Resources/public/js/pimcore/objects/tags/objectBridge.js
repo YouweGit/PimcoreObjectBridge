@@ -9,6 +9,7 @@ pimcore.object.tags.objectBridge = Class.create(pimcore.object.tags.objects, {
     dataChanged: false,
 
     initialize: function (data, fieldConfig) {
+
         this.data = [];
         this.fieldConfig = fieldConfig;
         var classStore = pimcore.globalmanager.get("object_types_store");
@@ -205,7 +206,16 @@ pimcore.object.tags.objectBridge = Class.create(pimcore.object.tags.objects, {
                     fields: ['id', 'dest_id', 'display', 'type', 'subtype', 'path', 'fullpath']
                 })
             });
-        } else {
+        } else if(layout.fieldtype === "date" && !readOnly) {
+            renderer = this.renderDate,
+                editor = {
+                    xtype: 'datefield',
+                    format: 'd-m-Y',
+                    allowBlank: !layout.mandatory
+                };
+
+        }
+        else {
             // Ext.log(layout.fieldtype + ' is not implemented and will be read only');
         }
 
@@ -722,6 +732,25 @@ pimcore.object.tags.objectBridge = Class.create(pimcore.object.tags.objects, {
             metaData.tdCls = '';
         }
         return value;
+    },
+
+    renderDate: function (value, metaData, rec) {
+
+        if (value === "" || value === null || value === false || typeof value === 'undefined') {
+            return "";
+        }
+
+        if(value.date){
+            var dt = new Date(value.date);
+            return Ext.Date.format(dt, 'd-m-Y');
+        }
+
+        if(value){
+            var dt = new Date(value);
+            return Ext.Date.format(dt, 'd-m-Y');
+        }
+
+        return "";
     },
 
     /**
