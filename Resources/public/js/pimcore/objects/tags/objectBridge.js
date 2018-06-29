@@ -210,7 +210,7 @@ pimcore.object.tags.objectBridge = Class.create(pimcore.object.tags.objects, {
             renderer = this.renderDate,
                 editor = {
                     xtype: 'datefield',
-                    format: 'd-m-Y',
+                    format: 'm/d/Y',
                     allowBlank: !layout.mandatory
                 };
 
@@ -742,12 +742,12 @@ pimcore.object.tags.objectBridge = Class.create(pimcore.object.tags.objects, {
 
         if(value.date){
             var dt = new Date(value.date);
-            return Ext.Date.format(dt, 'd-m-Y');
+            return Ext.Date.format(dt, 'm/d/Y');
         }
 
         if(value){
             var dt = new Date(value);
-            return Ext.Date.format(dt, 'd-m-Y');
+            return Ext.Date.format(dt, 'm/d/Y');
         }
 
         return "";
