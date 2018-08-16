@@ -302,7 +302,7 @@ pimcore.object.tags.objectBridge = Class.create(pimcore.object.tags.objects, {
                     items: [
                         {
                             tooltip: t('up'),
-                            icon: '/pimcore/static6/img/flat-color-icons/up.svg',
+                            icon: '/bundles/objectbridge/img/up.svg',
                             handler: function (grid, rowIndex) {
                                 if (rowIndex > 0) {
                                     var rec = grid.getStore().getAt(rowIndex);
@@ -319,7 +319,7 @@ pimcore.object.tags.objectBridge = Class.create(pimcore.object.tags.objects, {
                     items: [
                         {
                             tooltip: t('down'),
-                            icon: '/pimcore/static6/img/flat-color-icons/down.svg',
+                            icon: '/bundles/objectbridge/img/down.svg',
                             handler: function (grid, rowIndex) {
                                 if (rowIndex < (grid.getStore().getCount() - 1)) {
                                     var rec = grid.getStore().getAt(rowIndex);
@@ -339,7 +339,7 @@ pimcore.object.tags.objectBridge = Class.create(pimcore.object.tags.objects, {
             items: [
                 {
                     tooltip: t('open'),
-                    icon: '/pimcore/static6/img/flat-color-icons/cursor.svg',
+                    icon: '/bundles/objectbridge/img/cursor.svg',
                     handler: function (grid, rowIndex) {
                         var data = grid.getStore().getAt(rowIndex);
                         pimcore.helpers.openObject(data.data[this.sourceClassName + '_id'], 'object');
@@ -355,7 +355,7 @@ pimcore.object.tags.objectBridge = Class.create(pimcore.object.tags.objects, {
                 items: [
                     {
                         tooltip: t('remove'),
-                        icon: '/pimcore/static6/img/flat-color-icons/delete.svg',
+                        icon: '/bundles/objectbridge/img/delete.svg',
                         handler: function (grid, rowIndex) {
                             grid.getStore().removeAt(rowIndex);
                         }.bind(this)
