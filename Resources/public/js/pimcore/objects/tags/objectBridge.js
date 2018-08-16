@@ -9,6 +9,7 @@ pimcore.object.tags.objectBridge = Class.create(pimcore.object.tags.objects, {
     dataChanged: false,
 
     initialize: function (data, fieldConfig) {
+
         this.data = [];
         this.fieldConfig = fieldConfig;
         var classStore = pimcore.globalmanager.get("object_types_store");
@@ -191,7 +192,8 @@ pimcore.object.tags.objectBridge = Class.create(pimcore.object.tags.objects, {
                     pageSize: 10,
                     proxy: {
                         type: 'ajax',
-                        url: '/admin/href-typeahead/find',
+                        //@TODO Change after plugin has been converter
+                        url: '/plugin/PimcoreHrefTypeahead/search/find',
                         reader: {
                             type: 'json',
                             rootProperty: 'data'
@@ -204,7 +206,16 @@ pimcore.object.tags.objectBridge = Class.create(pimcore.object.tags.objects, {
                     fields: ['id', 'dest_id', 'display', 'type', 'subtype', 'path', 'fullpath']
                 })
             });
-        } else {
+        } else if(layout.fieldtype === "date" && !readOnly) {
+            renderer = this.renderDate,
+                editor = {
+                    xtype: 'datefield',
+                    format: 'm/d/Y',
+                    allowBlank: !layout.mandatory
+                };
+
+        }
+        else {
             // Ext.log(layout.fieldtype + ' is not implemented and will be read only');
         }
 
@@ -291,7 +302,7 @@ pimcore.object.tags.objectBridge = Class.create(pimcore.object.tags.objects, {
                     items: [
                         {
                             tooltip: t('up'),
-                            icon: '/pimcore/static6/img/flat-color-icons/up.svg',
+                            icon: '/bundles/objectbridge/img/up.svg',
                             handler: function (grid, rowIndex) {
                                 if (rowIndex > 0) {
                                     var rec = grid.getStore().getAt(rowIndex);
@@ -308,7 +319,7 @@ pimcore.object.tags.objectBridge = Class.create(pimcore.object.tags.objects, {
                     items: [
                         {
                             tooltip: t('down'),
-                            icon: '/pimcore/static6/img/flat-color-icons/down.svg',
+                            icon: '/bundles/objectbridge/img/down.svg',
                             handler: function (grid, rowIndex) {
                                 if (rowIndex < (grid.getStore().getCount() - 1)) {
                                     var rec = grid.getStore().getAt(rowIndex);
@@ -328,7 +339,7 @@ pimcore.object.tags.objectBridge = Class.create(pimcore.object.tags.objects, {
             items: [
                 {
                     tooltip: t('open'),
-                    icon: '/pimcore/static6/img/flat-color-icons/cursor.svg',
+                    icon: '/bundles/objectbridge/img/cursor.svg',
                     handler: function (grid, rowIndex) {
                         var data = grid.getStore().getAt(rowIndex);
                         pimcore.helpers.openObject(data.data[this.sourceClassName + '_id'], 'object');
@@ -344,7 +355,7 @@ pimcore.object.tags.objectBridge = Class.create(pimcore.object.tags.objects, {
                 items: [
                     {
                         tooltip: t('remove'),
-                        icon: '/pimcore/static6/img/flat-color-icons/delete.svg',
+                        icon: '/bundles/objectbridge/img/delete.svg',
                         handler: function (grid, rowIndex) {
                             grid.getStore().removeAt(rowIndex);
                         }.bind(this)
@@ -721,6 +732,25 @@ pimcore.object.tags.objectBridge = Class.create(pimcore.object.tags.objects, {
             metaData.tdCls = '';
         }
         return value;
+    },
+
+    renderDate: function (value, metaData, rec) {
+
+        if (value === "" || value === null || value === false || typeof value === 'undefined') {
+            return "";
+        }
+
+        if(value.date){
+            var dt = new Date(value.date);
+            return Ext.Date.format(dt, 'm/d/Y');
+        }
+
+        if(value){
+            var dt = new Date(value);
+            return Ext.Date.format(dt, 'm/d/Y');
+        }
+
+        return "";
     },
 
     /**
