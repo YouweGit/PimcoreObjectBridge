@@ -192,8 +192,7 @@ pimcore.object.tags.objectBridge = Class.create(pimcore.object.tags.objects, {
                     pageSize: 10,
                     proxy: {
                         type: 'ajax',
-                        //@TODO Change after plugin has been converter
-                        url: '/plugin/PimcoreHrefTypeahead/search/find',
+                        url: '/admin/href-typeahead/find',
                         reader: {
                             type: 'json',
                             rootProperty: 'data'
