@@ -3,6 +3,8 @@
 namespace ObjectBridgeBundle\Model\DataObject\ClassDefinition\Data;
 
 
+use DataDictionaryBundle\Graph\Interfaces\Visitor;
+use ObjectBridgeBundle\DataDictionary\ObjectBridgeVisitor;
 use PDO;
 use Pimcore\Logger;
 use Pimcore\Model;
@@ -16,7 +18,7 @@ use ObjectBridgeBundle\Service\DataObject\ObjectBridgeService;
 /** @noinspection ClassOverridesFieldOfSuperClassInspection
  * We need to overwrite public properties because pimcore uses them for storing data
  */
-class ObjectBridge extends ClassDefinition\Data\ObjectsMetadata
+class ObjectBridge extends ClassDefinition\Data\ObjectsMetadata implements \DataDictionaryBundle\Interfaces\DataDictionary
 {
 
     /**
@@ -1403,4 +1405,11 @@ class ObjectBridge extends ClassDefinition\Data\ObjectsMetadata
     {
         return $this->disableUpDown;
     }
+
+    //DataDictionaryBundle\Interfaces\DataDictionary methods:
+    public static function getVisitor(string $className = null): Visitor
+    {
+        return new ObjectBridgeVisitor();
+    }
+
 }
