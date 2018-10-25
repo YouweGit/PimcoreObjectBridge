@@ -783,49 +783,6 @@ class ObjectBridge extends ClassDefinition\Data\ObjectsMetadata
         }
     }
 
-
-    /**
-     * Default functionality from ClassDefinition\Data\Object::preGetData
-     * @param AbstractObject\ $object
-     * @param array $params
-     * @return array|null
-     */
-    public function preGetData($object, $params = [])
-    {
-        $data = null;
-        if ($object instanceof Concrete) {
-            $data = $object->{$this->getName()};
-            if ($this->getLazyLoading() && !in_array($this->getName(), $object->getO__loadedLazyFields(), true)) {
-                $data = $this->load($object, ['force' => true]);
-
-                $setter = 'set' . ucfirst($this->getName());
-                if (method_exists($object, $setter)) {
-                    $object->$setter($data);
-                }
-            }
-        } elseif ($object instanceof Localizedfield) {
-            $data = $params['data'];
-        } elseif ($object instanceof Model\DataObject\Fieldcollection\Data\AbstractData) {
-            $data = $object->{$this->getName()};
-        } elseif ($object instanceof Model\DataObject\Objectbrick\Data\AbstractData) {
-            $data = $object->{$this->getName()};
-        }
-
-
-        if (is_array($data) && AbstractObject::doHideUnpublished()) {
-            $publishedList = [];
-            foreach ($data as $listElement) {
-                if (Element\Service::isPublished($listElement)) {
-                    $publishedList[] = $listElement;
-                }
-            }
-
-            return $publishedList;
-        }
-
-        return is_array($data) ? $data : [];
-    }
-
     /**
      * Dummy function used just to overwrite default metadata behavior
      * @param Element\AbstractElement $object
