@@ -119,6 +119,14 @@ class ObjectBridge extends ClassDefinition\Data\ObjectsMetadata
     }
 
     /**
+     * @return bool
+     */
+    public function supportsDirtyDetection()
+    {
+        return false;
+    }
+
+    /**
      * @see ClassDefinition\Data::getDataForResource
      * @param array $data
      * @param null|AbstractObject $object
@@ -328,10 +336,16 @@ class ObjectBridge extends ClassDefinition\Data\ObjectsMetadata
                         if ($fd instanceof ClassDefinition\Data\Href) {
                             $valueObject = $this->getObjectForHref($fd, $objectData[ $key ]);
                             $bridgeObject->$setter($valueObject);
-                        } else {
+                        }elseif($fd instanceof ClassDefinition\Data\Date){
+                            if(!empty($objectData[$key]["date"]) && is_string($objectData[$key]["date"])){
+                                $bridgeObject->$setter(new \DateTime($objectData[ $key ]["date"]));
+                            }elseif(!empty($objectData[$key]) && is_string($objectData[$key])){
+                                $bridgeObject->$setter(new \DateTime($objectData[ $key ]));
+                            }
+                        }
+                        else {
                             $bridgeObject->$setter($objectData[ $key ]);
                         }
-
                     }
                 }
 
@@ -937,7 +951,7 @@ class ObjectBridge extends ClassDefinition\Data\ObjectsMetadata
         if (method_exists($fd, 'getDefaultValue') && strlen(strval($fd->getDefaultValue())) > 0) {
             $this->$fieldName[ $field ]['default'] =  $fd->getDefaultValue();
         }
-        
+
         // Dropdowns have options
         if ($fd instanceof ClassDefinition\Data\Select) {
             $this->$fieldName[ $field ]['options'] = $fd->getOptions();
@@ -971,60 +985,6 @@ class ObjectBridge extends ClassDefinition\Data\ObjectsMetadata
         return $title;
     }
 
-
-    /**
-     * When this field is localized or included in a object brick this function will be called
-     * Encode value for packing it into a single column.
-     * @param array $value
-     * @param AbstractObject $object
-     * @param mixed $params
-     * @return mixed
-     */
-    public function marshal($value, $object = null, $params = [])
-    {
-        if (is_array($value)) {
-            $result = [];
-            foreach ($value as $element) {
-                $type = Element\Service::getType($element);
-                $id = $element->getId();
-                $result[] = [
-                    'type' => $type,
-                    'id'   => $id,
-                ];
-            }
-
-            return $result;
-        }
-
-        return null;
-    }
-
-    /**
-     * When this field is localized or included in a object brick this function will be called
-     * Used to transform back to object data stored in marshal
-     * @param array $value
-     * @param AbstractObject $object
-     * @param mixed $params
-     * @return mixed
-     */
-    public function unmarshal($value, $object = null, $params = [])
-    {
-        if (is_array($value)) {
-            $result = [];
-            foreach ($value as $elementData) {
-                $type = $elementData['type'];
-                $id = $elementData['id'];
-                $element = Element\Service::getElementById($type, $id);
-                if ($element) {
-                    $result[] = $element;
-                }
-            }
-
-            return $result;
-        }
-
-        return null;
-    }
 
     /**
      * @return mixed
