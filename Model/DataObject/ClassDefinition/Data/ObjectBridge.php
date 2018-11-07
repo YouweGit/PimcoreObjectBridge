@@ -7,6 +7,7 @@ use PDO;
 use Pimcore\Logger;
 use Pimcore\Model;
 use Pimcore\Model\Element;
+use Pimcore\Model\DataObject;
 use Pimcore\Model\DataObject\AbstractObject;
 use Pimcore\Model\DataObject\ClassDefinition;
 use Pimcore\Db;
@@ -182,7 +183,7 @@ class ObjectBridge extends ClassDefinition\Data\ObjectsMetadata
 
         if (is_array($data) && count($data) > 0) {
             foreach ($data as $objectData) {
-                if ($objectData instanceof Object\Concrete) {
+                if ($objectData instanceof DataObject\Concrete) {
                     $ids[] = $objectData->getId();
                 }
             }
@@ -1334,26 +1335,36 @@ class ObjectBridge extends ClassDefinition\Data\ObjectsMetadata
                 $object->setObjectVar($this->getName(), $data);
                 $this->markLazyloadedFieldAsLoaded($object);
             }
-        } elseif ($object instanceof DataObject\Localizedfield) {
-            $data = $params['data'];
-        } elseif ($object instanceof DataObject\Fieldcollection\Data\AbstractData) {
-            $data = $object->getObjectVar($this->getName());
-        } elseif ($object instanceof DataObject\Objectbrick\Data\AbstractData) {
-            $data = $object->getObjectVar($this->getName());
-        }
+            $data = null;
+            if ($object instanceof DataObject\Concrete) {
+                $data = $object->getObjectVar($this->getName());
+                if ($this->getLazyLoading() and !in_array($this->getName(), $object->getO__loadedLazyFields())) {
+                    //$data = $this->getDataFromResource($object->getRelationData($this->getName(),true,null));
+                    $data = $this->load($object, ['force' => true]);
 
-        if (DataObject\AbstractObject::doHideUnpublished() and is_array($data)) {
-            $publishedList = [];
-            foreach ($data as $listElement) {
-                if (Element\Service::isPublished($listElement)) {
-                    $publishedList[] = $listElement;
+                    $object->setObjectVar($this->getName(), $data);
+                    $this->markLazyloadedFieldAsLoaded($object);
                 }
+            } elseif ($object instanceof DataObject\Localizedfield) {
+                $data = $params['data'];
+            } elseif ($object instanceof DataObject\Fieldcollection\Data\AbstractData) {
+                $data = $object->getObjectVar($this->getName());
+            } elseif ($object instanceof DataObject\Objectbrick\Data\AbstractData) {
+                $data = $object->getObjectVar($this->getName());
             }
 
-            return $publishedList;
+            if (DataObject\AbstractObject::doHideUnpublished() and is_array($data)) {
+                $publishedList = [];
+                foreach ($data as $listElement) {
+                    if (Element\Service::isPublished($listElement)) {
+                        $publishedList[] = $listElement;
+                    }
+                }
+
+                return $publishedList;
+            }
+
+            return $data;
         }
-
-        return $data;
     }
-
 }
