@@ -119,6 +119,14 @@ class ObjectBridge extends ClassDefinition\Data\ObjectsMetadata
     }
 
     /**
+     * @return bool
+     */
+    public function supportsDirtyDetection()
+    {
+        return false;
+    }
+
+    /**
      * @see ClassDefinition\Data::getDataForResource
      * @param array $data
      * @param null|AbstractObject $object
@@ -979,60 +987,6 @@ class ObjectBridge extends ClassDefinition\Data\ObjectsMetadata
 
 
     /**
-     * When this field is localized or included in a object brick this function will be called
-     * Encode value for packing it into a single column.
-     * @param array $value
-     * @param AbstractObject $object
-     * @param mixed $params
-     * @return mixed
-     */
-    public function marshal($value, $object = null, $params = [])
-    {
-        if (is_array($value)) {
-            $result = [];
-            foreach ($value as $element) {
-                $type = Element\Service::getType($element);
-                $id = $element->getId();
-                $result[] = [
-                    'type' => $type,
-                    'id'   => $id,
-                ];
-            }
-
-            return $result;
-        }
-
-        return null;
-    }
-
-    /**
-     * When this field is localized or included in a object brick this function will be called
-     * Used to transform back to object data stored in marshal
-     * @param array $value
-     * @param AbstractObject $object
-     * @param mixed $params
-     * @return mixed
-     */
-    public function unmarshal($value, $object = null, $params = [])
-    {
-        if (is_array($value)) {
-            $result = [];
-            foreach ($value as $elementData) {
-                $type = $elementData['type'];
-                $id = $elementData['id'];
-                $element = Element\Service::getElementById($type, $id);
-                if ($element) {
-                    $result[] = $element;
-                }
-            }
-
-            return $result;
-        }
-
-        return null;
-    }
-
-    /**
      * @return mixed
      */
     public function getSourceAllowedClassName()
@@ -1360,4 +1314,46 @@ class ObjectBridge extends ClassDefinition\Data\ObjectsMetadata
     {
         return $this->disableUpDown;
     }
+    
+
+    /**
+     * @param $object
+     * @param array $params
+     * @return array|mixed|null
+     * @throws \Exception
+     */
+    public function preGetData($object, $params = [])
+    {
+        $data = null;
+        if ($object instanceof DataObject\Concrete) {
+            $data = $object->getObjectVar($this->getName());
+            if ($this->getLazyLoading() and !in_array($this->getName(), $object->getO__loadedLazyFields())) {
+                //$data = $this->getDataFromResource($object->getRelationData($this->getName(),true,null));
+                $data = $this->load($object, ['force' => true]);
+
+                $object->setObjectVar($this->getName(), $data);
+                $this->markLazyloadedFieldAsLoaded($object);
+            }
+        } elseif ($object instanceof DataObject\Localizedfield) {
+            $data = $params['data'];
+        } elseif ($object instanceof DataObject\Fieldcollection\Data\AbstractData) {
+            $data = $object->getObjectVar($this->getName());
+        } elseif ($object instanceof DataObject\Objectbrick\Data\AbstractData) {
+            $data = $object->getObjectVar($this->getName());
+        }
+
+        if (DataObject\AbstractObject::doHideUnpublished() and is_array($data)) {
+            $publishedList = [];
+            foreach ($data as $listElement) {
+                if (Element\Service::isPublished($listElement)) {
+                    $publishedList[] = $listElement;
+                }
+            }
+
+            return $publishedList;
+        }
+
+        return $data;
+    }
+
 }
