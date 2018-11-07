@@ -1314,4 +1314,46 @@ class ObjectBridge extends ClassDefinition\Data\ObjectsMetadata
     {
         return $this->disableUpDown;
     }
+    
+
+    /**
+     * @param $object
+     * @param array $params
+     * @return array|mixed|null
+     * @throws \Exception
+     */
+    public function preGetData($object, $params = [])
+    {
+        $data = null;
+        if ($object instanceof DataObject\Concrete) {
+            $data = $object->getObjectVar($this->getName());
+            if ($this->getLazyLoading() and !in_array($this->getName(), $object->getO__loadedLazyFields())) {
+                //$data = $this->getDataFromResource($object->getRelationData($this->getName(),true,null));
+                $data = $this->load($object, ['force' => true]);
+
+                $object->setObjectVar($this->getName(), $data);
+                $this->markLazyloadedFieldAsLoaded($object);
+            }
+        } elseif ($object instanceof DataObject\Localizedfield) {
+            $data = $params['data'];
+        } elseif ($object instanceof DataObject\Fieldcollection\Data\AbstractData) {
+            $data = $object->getObjectVar($this->getName());
+        } elseif ($object instanceof DataObject\Objectbrick\Data\AbstractData) {
+            $data = $object->getObjectVar($this->getName());
+        }
+
+        if (DataObject\AbstractObject::doHideUnpublished() and is_array($data)) {
+            $publishedList = [];
+            foreach ($data as $listElement) {
+                if (Element\Service::isPublished($listElement)) {
+                    $publishedList[] = $listElement;
+                }
+            }
+
+            return $publishedList;
+        }
+
+        return $data;
+    }
+
 }
