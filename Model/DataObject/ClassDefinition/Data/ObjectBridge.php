@@ -17,7 +17,7 @@ use ObjectBridgeBundle\Service\DataObject\ObjectBridgeService;
 /** @noinspection ClassOverridesFieldOfSuperClassInspection
  * We need to overwrite public properties because pimcore uses them for storing data
  */
-class ObjectBridge extends ClassDefinition\Data\ObjectsMetadata
+class ObjectBridge extends  ClassDefinition\Data\AdvancedManyToManyObjectRelation
 {
 
     /**
@@ -226,7 +226,7 @@ class ObjectBridge extends ClassDefinition\Data\ObjectsMetadata
 
                         $fd = $bridgeClassDef->getFieldDefinition($bridgeVisibleField);
                         $key = ucfirst($bridgeClassDef->getName()) . '_' . $bridgeVisibleField;
-                        if ($fd instanceof ClassDefinition\Data\Href) {
+                        if ($fd instanceof ClassDefinition\Data\ManyToOneRelation) {
                             $valueObject = ObjectBridgeService::getValueForObject($bridgeObject, $bridgeVisibleField);
 
                             // To avoid making too many requests to the server we add the display property on
@@ -255,7 +255,7 @@ class ObjectBridge extends ClassDefinition\Data\ObjectsMetadata
                         $fd = $sourceClassDef->getFieldDefinition($sourceVisibleField);
                         $key = ucfirst($sourceClassDef->getName()) . '_' . $sourceVisibleField;
 
-                        if ($fd instanceof ClassDefinition\Data\Href) {
+                        if ($fd instanceof ClassDefinition\Data\ManyToOneRelation) {
                             $valueObject = ObjectBridgeService::getValueForObjectToString($sourceObject, $sourceVisibleField);
                             $columnData[ $key ] = $valueObject;
                         } else {
@@ -334,7 +334,7 @@ class ObjectBridge extends ClassDefinition\Data\ObjectsMetadata
                     if (array_key_exists($key, $objectData)) {
                         $setter = 'set' . ucfirst($bridgeVisibleField);
 
-                        if ($fd instanceof ClassDefinition\Data\Href) {
+                        if ($fd instanceof ClassDefinition\Data\ManyToOneRelation) {
                             $valueObject = $this->getObjectForHref($fd, $objectData[ $key ]);
                             $bridgeObject->$setter($valueObject);
                         }elseif($fd instanceof ClassDefinition\Data\Date){
@@ -476,7 +476,7 @@ class ObjectBridge extends ClassDefinition\Data\ObjectsMetadata
     }
 
     /**
-     * @param ClassDefinition\Data\Href $fd
+     * @param ClassDefinition\Data\ManyToOneRelation $fd
      * @param string|int $value
      * @return null|AbstractObject
      */

@@ -605,12 +605,13 @@ pimcore.object.classes.data.objectBridge = Class.create(pimcore.object.classes.d
      * @returns {Ext.data.Store}
      */
     getBridgeFieldStore: function () {
+        debugger;
         return new Ext.data.Store({
             proxy: {
                 type: 'ajax',
                 url: '/admin/object-helper/grid-get-column-config',
                 extraParams: {
-                    types: 'href',
+                    types: 'manyToOneRelation',
                     no_system_columns: true,
                     name: this.datax.bridgeAllowedClassName
                 },

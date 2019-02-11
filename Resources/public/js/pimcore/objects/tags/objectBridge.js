@@ -95,6 +95,7 @@ pimcore.object.tags.objectBridge = Class.create(pimcore.object.tags.objects, {
      * @returns {Ext.grid.column.Column}
      */
     getColumnFromLayout: function (classNameText, layout, readOnly, prefix) {
+        debugger;
         var editor = null,
             renderer = null,
             minWidth = 40;
@@ -160,7 +161,7 @@ pimcore.object.tags.objectBridge = Class.create(pimcore.object.tags.objects, {
                     data: layout.options
                 })
             });
-        } else if ((layout.fieldtype === "href" || layout.fieldtype === "hrefTypeahead") && !readOnly) {
+        } else if ((layout.fieldtype === "manyToOneRelation" || layout.fieldtype === "hrefTypeahead") && !readOnly) {
             renderer = this.renderHrefWithValidation;
             minWidth = 200;
             editor = Ext.create('Ext.form.ComboBox', {
