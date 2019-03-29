@@ -23,7 +23,7 @@ Bridge object editing fields:
 * numeric
 * input
 * select
-* href
+* manyToOneRelation
 * checkbox
 
 *If not in list above then field will be read-only*
