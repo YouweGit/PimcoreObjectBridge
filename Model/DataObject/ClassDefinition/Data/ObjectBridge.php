@@ -134,7 +134,7 @@ class ObjectBridge extends ClassDefinition\Data\ObjectsMetadata
      * @param mixed $params
      * @return array
      */
-    public function getDataForResource($data, $object = null, $params = [])
+    public function getDataForResourceObjectBridge($data, $object = null, $params = [])
     {
         $return = [];
 
@@ -768,7 +768,7 @@ class ObjectBridge extends ClassDefinition\Data\ObjectsMetadata
     {
         $db = Db::get();
         $data = $this->getDataFromObjectParam($object, $params);
-        $relations = $this->getDataForResource($data, $object, $params);
+        $relations = $this->getDataForResourceObjectBridge($data, $object, $params);
         // $classId is initialized dinamicaly
         if (is_array($relations) && !empty($relations)) {
             foreach ($relations as $relation) {
