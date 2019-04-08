@@ -1328,7 +1328,7 @@ class ObjectBridge extends ClassDefinition\Data\ObjectsMetadata
         $data = null;
         if ($object instanceof DataObject\Concrete) {
             $data = $object->getObjectVar($this->getName());
-            if ($this->getLazyLoading() and !in_array($this->getName(), $object->getO__loadedLazyFields())) {
+            if ($this->getLazyLoading() and !in_array($this->getName(), $object->getLazyLoadedFieldNames())) {
                 //$data = $this->getDataFromResource($object->getRelationData($this->getName(),true,null));
                 $data = $this->load($object, ['force' => true]);
 
@@ -1338,7 +1338,7 @@ class ObjectBridge extends ClassDefinition\Data\ObjectsMetadata
             $data = null;
             if ($object instanceof DataObject\Concrete) {
                 $data = $object->getObjectVar($this->getName());
-                if ($this->getLazyLoading() and !in_array($this->getName(), $object->getO__loadedLazyFields())) {
+                if ($this->getLazyLoading() and !in_array($this->getName(), $object->getLazyLoadedFieldNames())) {
                     //$data = $this->getDataFromResource($object->getRelationData($this->getName(),true,null));
                     $data = $this->load($object, ['force' => true]);
 
