@@ -139,11 +139,12 @@ pimcore.object.tags.objectBridge = Class.create(pimcore.object.tags.objects, {
             return checkBoxColumn;
         }
 
-        else if (layout.fieldtype === "select" && !readOnly) {
+        else if (layout.fieldtype === "select") {
             renderer = this.renderDisplayField;
             editor = Ext.create('Ext.form.ComboBox', {
                 allowBlank: !layout.mandatory,
                 typeAhead: true,
+                readOnly: readOnly,
                 forceSelection: true,
                 mode: 'local',
                 queryMode: 'local',
