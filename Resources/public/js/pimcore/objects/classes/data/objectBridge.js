@@ -10,11 +10,11 @@ pimcore.object.classes.data.objectBridge = Class.create(pimcore.object.classes.d
      */
     allowIn: {
         object: true,
-        objectbrick: true,
-        fieldcollection: true,
-        localizedfield: true,
+        objectbrick: false,
+        fieldcollection: false,
+        localizedfield: false,
         classificationstore: false,
-        block: true
+        block: false
     },
 
     initialize: function (treeNode, initData) {
@@ -23,7 +23,7 @@ pimcore.object.classes.data.objectBridge = Class.create(pimcore.object.classes.d
         this.initData(initData);
 
         if (typeof this.datax.lazyLoading == "undefined") {
-            this.datax.lazyLoading = true;
+            this.datax.lazyLoading = false;
         }
 
         if (typeof this.datax.decimalPrecision == "undefined") {
