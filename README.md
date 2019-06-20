@@ -50,7 +50,7 @@ Bridge object editing fields:
   <dd>Where bridge objects should be stored after automatic creating</dd>
 </dl>
 Limitation:
-When HREF is used, there can only be one class type linked. First one will be used.
+When many to one relation is used, there can only be one class type linked. First one will be used.
 
 ### Example scenario
 
@@ -79,7 +79,7 @@ When HREF is used, there can only be one class type linked. First one will be us
 
 In this example, you would add the ObjectBridge field to Garage.
 The bridge table would be GarageCar.
-GarageCar would have a (single) HREF field to Car. 
+GarageCar would have a (single) many to one relation field to Car.
 
 Fields for example tables:
 
@@ -91,7 +91,7 @@ Garage
 GarageCar
 * totalQuantity
 * availableQuantity
-* car (field type = href)
+* car (field type = manyToOneRelation)
 
 Car
 * type

@@ -2,7 +2,6 @@
 
 namespace ObjectBridgeBundle\Model\DataObject\ClassDefinition\Data;
 
-
 use PDO;
 use Pimcore\Logger;
 use Pimcore\Model;
@@ -128,7 +127,7 @@ class ObjectBridge extends ClassDefinition\Data\Relations\AbstractRelations impl
      *
      * @return bool
      */
-    public function setLazyLoading()
+    public function setLazyLoading($lazyLoading)
     {
         return $this;
     }
@@ -145,10 +144,10 @@ class ObjectBridge extends ClassDefinition\Data\Relations\AbstractRelations impl
             foreach ($data as $object) {
                 if ($object instanceof DataObject\Concrete) {
                     $return[] = [
-                        'dest_id' => $object->getId(),
-                        'type' => 'object',
+                        'dest_id'   => $object->getId(),
+                        'type'      => 'object',
                         'fieldname' => $this->getName(),
-                        'index' => $counter
+                        'index'     => $counter,
                     ];
                 }
                 $counter++;
@@ -228,7 +227,7 @@ class ObjectBridge extends ClassDefinition\Data\Relations\AbstractRelations impl
     public function getDataFromResource($data, $object = null, $params = [])
     {
         $objects = [];
-        \Pimcore\Log\Simple::log('objectbridge', var_export($data,true));
+        \Pimcore\Log\Simple::log('objectbridge', var_export($data, true));
         if (is_array($data) && count($data) > 0) {
             foreach ($data as $objectData) {
                 $o = AbstractObject::getById($objectData['dest_id']);
@@ -274,23 +273,23 @@ class ObjectBridge extends ClassDefinition\Data\Relations\AbstractRelations impl
 
                     $bridgeIdKey = ucfirst($bridgeClassDef->getName()) . '_id';
                     $columnData = [];
-                    $columnData[ $bridgeIdKey ] = $bridgeObject->getId();
+                    $columnData[$bridgeIdKey] = $bridgeObject->getId();
 
                     foreach ($bridgeVisibleFieldsArray as $bridgeVisibleField) {
 
                         $fd = $bridgeClassDef->getFieldDefinition($bridgeVisibleField);
                         $key = ucfirst($bridgeClassDef->getName()) . '_' . $bridgeVisibleField;
-                        if ($fd instanceof ClassDefinition\Data\Href) {
+                        if ($fd instanceof ClassDefinition\Data\ManyToOneRelation) {
                             $valueObject = ObjectBridgeService::getValueForObject($bridgeObject, $bridgeVisibleField);
 
                             // To avoid making too many requests to the server we add the display property on
                             // run time but default path, but you can implement whatever to string method
                             // Javascript will check if have a display property and use it
 
-                            $columnData[ $key ] = $valueObject ? $valueObject->getId() : null;
-                            $columnData[ $key . '_display' ] = $valueObject ? (string)$valueObject : null;
+                            $columnData[$key] = $valueObject ? $valueObject->getId() : null;
+                            $columnData[$key . '_display'] = $valueObject ? (string)$valueObject : null;
                         } else {
-                            $columnData[ $key ] = ObjectBridgeService::getValueForObject($bridgeObject, $bridgeVisibleField);
+                            $columnData[$key] = ObjectBridgeService::getValueForObject($bridgeObject, $bridgeVisibleField);
                         }
                     }
 
@@ -302,18 +301,18 @@ class ObjectBridge extends ClassDefinition\Data\Relations\AbstractRelations impl
                     }
 
                     $sourceIdKey = ucfirst($sourceClassDef->getName()) . '_id';
-                    $columnData[ $sourceIdKey ] = $sourceObject->getId();
+                    $columnData[$sourceIdKey] = $sourceObject->getId();
                     $sourceVisibleFieldsArray = $this->removeRestrictedKeys($this->getSourceVisibleFieldsAsArray());
 
                     foreach ($sourceVisibleFieldsArray as $sourceVisibleField) {
                         $fd = $sourceClassDef->getFieldDefinition($sourceVisibleField);
                         $key = ucfirst($sourceClassDef->getName()) . '_' . $sourceVisibleField;
 
-                        if ($fd instanceof ClassDefinition\Data\Href) {
+                        if ($fd instanceof ClassDefinition\Data\ManyToOneRelation) {
                             $valueObject = ObjectBridgeService::getValueForObjectToString($sourceObject, $sourceVisibleField);
-                            $columnData[ $key ] = $valueObject;
+                            $columnData[$key] = $valueObject;
                         } else {
-                            $columnData[ $key ] = ObjectBridgeService::getValueForObject($sourceObject, $sourceVisibleField);
+                            $columnData[$key] = ObjectBridgeService::getValueForObject($sourceObject, $sourceVisibleField);
                         }
                     }
                     $return[] = $columnData;
@@ -355,7 +354,7 @@ class ObjectBridge extends ClassDefinition\Data\Relations\AbstractRelations impl
             $idSourceFieldKey = $sourceClassDef->getName() . '_id';
 
             foreach ($data as $objectData) {
-                $sourceId = $objectData[ $idSourceFieldKey ];
+                $sourceId = $objectData[$idSourceFieldKey];
                 $bridgeObjectId = $this->getBridgeIdBySourceAndOwner($object, $bridgeClass, $sourceId);
 
 
@@ -388,18 +387,17 @@ class ObjectBridge extends ClassDefinition\Data\Relations\AbstractRelations impl
                     if (array_key_exists($key, $objectData)) {
                         $setter = 'set' . ucfirst($bridgeVisibleField);
 
-                        if ($fd instanceof ClassDefinition\Data\Href) {
-                            $valueObject = $this->getObjectForHref($fd, $objectData[ $key ]);
+                        if ($fd instanceof ClassDefinition\Data\ManyToOneRelation) {
+                            $valueObject = $this->getObjectForManyToOneRelation($fd, $objectData[$key]);
                             $bridgeObject->$setter($valueObject);
-                        }elseif($fd instanceof ClassDefinition\Data\Date){
-                            if(!empty($objectData[$key]["date"]) && is_string($objectData[$key]["date"])){
-                                $bridgeObject->$setter(new \DateTime($objectData[ $key ]["date"]));
-                            }elseif(!empty($objectData[$key]) && is_string($objectData[$key])){
-                                $bridgeObject->$setter(new \DateTime($objectData[ $key ]));
+                        } elseif ($fd instanceof ClassDefinition\Data\Date) {
+                            if (!empty($objectData[$key]["date"]) && is_string($objectData[$key]["date"])) {
+                                $bridgeObject->$setter(new \DateTime($objectData[$key]["date"]));
+                            } elseif (!empty($objectData[$key]) && is_string($objectData[$key])) {
+                                $bridgeObject->$setter(new \DateTime($objectData[$key]));
                             }
-                        }
-                        else {
-                            $bridgeObject->$setter($objectData[ $key ]);
+                        } else {
+                            $bridgeObject->$setter($objectData[$key]);
                         }
                     }
                 }
@@ -445,11 +443,11 @@ class ObjectBridge extends ClassDefinition\Data\Relations\AbstractRelations impl
     {
         // Id should be never edited and it will always be added by default
         if (($key = array_search('id', $visibleFieldsArray, true)) !== false) {
-            unset($visibleFieldsArray[ $key ]);
+            unset($visibleFieldsArray[$key]);
         }
         // Bridge object should be handled separately
         if (($key = array_search($this->bridgeField, $visibleFieldsArray, true)) !== false) {
-            unset($visibleFieldsArray[ $key ]);
+            unset($visibleFieldsArray[$key]);
         }
 
         return $visibleFieldsArray;
@@ -530,11 +528,11 @@ class ObjectBridge extends ClassDefinition\Data\Relations\AbstractRelations impl
     }
 
     /**
-     * @param ClassDefinition\Data\Href $fd
+     * @param ClassDefinition\Data\ManyToOneRelation $fd
      * @param string|int $value
      * @return null|AbstractObject
      */
-    private function getObjectForHref($fd, $value)
+    private function getObjectForManyToOneRelation($fd, $value)
     {
         $class = current($fd->getClasses());
         if ($class && is_array($class) && array_key_exists('classes', $class)) {
@@ -632,12 +630,15 @@ class ObjectBridge extends ClassDefinition\Data\Relations\AbstractRelations impl
                     throw new Element\ValidationException('Expected ' . $bridgeClassFullName);
                 }
                 foreach ($objectBridge->getClass()->getFieldDefinitions() as $fieldDefinition) {
-                    $fieldDefinition->checkValidity(ObjectBridgeService::getValueForObject($objectBridge, $fieldDefinition->getName()), $omitMandatoryCheck);
+                    $fieldDefinition->checkValidity(
+                        ObjectBridgeService::getValueForObject($objectBridge, $fieldDefinition->getName()),
+                        $omitMandatoryCheck
+                    );
                 }
 
                 if (!($objectBridge instanceof Concrete) || $objectBridge->getClassName() !== $this->getBridgeAllowedClassName()) {
                     $id = $objectBridge instanceof Concrete ? $objectBridge->getId() : '??';
-                    throw new Element\ValidationException('Invalid object relation to object [' . $id . '] in field ' . $this->getName(), null, null);
+                    throw new Element\ValidationException('Invalid object relation to object [' . $id . '] in field ' . $this->getName());
                 }
             }
         }
@@ -726,7 +727,7 @@ class ObjectBridge extends ClassDefinition\Data\Relations\AbstractRelations impl
         if (is_array($data) && count($data) > 0) {
             foreach ($data as $o) {
                 if ($o instanceof AbstractObject) {
-                    $dependencies[ 'object_' . $o->getId() ] = [
+                    $dependencies['object_' . $o->getId()] = [
                         'id'   => $o->getId(),
                         'type' => 'object',
                     ];
@@ -882,7 +883,7 @@ class ObjectBridge extends ClassDefinition\Data\Relations\AbstractRelations impl
 
     /**
      * Adds fields details like read only, type , title ..
-     * and data for select boxes and href's
+     * and data for select boxes and many to one relations
      * @param AbstractObject $object
      * @param array $context additional contextual data
      * @throws \Exception
@@ -968,7 +969,7 @@ class ObjectBridge extends ClassDefinition\Data\Relations\AbstractRelations impl
                 $id = $element->getId();
                 $result[] = [
                     'type' => $type,
-                    'id' => $id
+                    'id'   => $id,
                 ];
             }
 
@@ -1012,21 +1013,21 @@ class ObjectBridge extends ClassDefinition\Data\Relations\AbstractRelations impl
      */
     private function setFieldDefinition($fieldName, $fd, $field, $readOnly, $hidden)
     {
-        $this->$fieldName[ $field ]['name'] = $fd->getName();
-        $this->$fieldName[ $field ]['title'] = $this->formatTitle($fd->getTitle());
-        $this->$fieldName[ $field ]['fieldtype'] = $fd->getFieldtype();
-        $this->$fieldName[ $field ]['readOnly'] = $readOnly || $fd->getNoteditable() ? true : false;
-        $this->$fieldName[ $field ]['hidden'] = $hidden;
-        $this->$fieldName[ $field ]['mandatory'] = $fd->getMandatory();
+        $this->$fieldName[$field]['name'] = $fd->getName();
+        $this->$fieldName[$field]['title'] = $this->formatTitle($fd->getTitle());
+        $this->$fieldName[$field]['fieldtype'] = $fd->getFieldtype();
+        $this->$fieldName[$field]['readOnly'] = $readOnly || $fd->getNoteditable() ? true : false;
+        $this->$fieldName[$field]['hidden'] = $hidden;
+        $this->$fieldName[$field]['mandatory'] = $fd->getMandatory();
 
         // Add default value if any is set
         if (method_exists($fd, 'getDefaultValue') && strlen(strval($fd->getDefaultValue())) > 0) {
-            $this->$fieldName[ $field ]['default'] =  $fd->getDefaultValue();
+            $this->$fieldName[$field]['default'] = $fd->getDefaultValue();
         }
 
         // Dropdowns have options
         if ($fd instanceof ClassDefinition\Data\Select) {
-            $this->$fieldName[ $field ]['options'] = $fd->getOptions();
+            $this->$fieldName[$field]['options'] = $fd->getOptions();
         }
     }
 
@@ -1041,11 +1042,11 @@ class ObjectBridge extends ClassDefinition\Data\Relations\AbstractRelations impl
     {
         /** @var  $translation */
         $translation = \Pimcore::getContainer()->get('translator');
-        $this->$fieldName[ $field ]['name'] = $field;
-        $this->$fieldName[ $field ]['title'] = $this->formatTitle($translation->trans($field));
-        $this->$fieldName[ $field ]['fieldtype'] = 'input';
-        $this->$fieldName[ $field ]['readOnly'] = true;
-        $this->$fieldName[ $field ]['hidden'] = $hidden;
+        $this->$fieldName[$field]['name'] = $field;
+        $this->$fieldName[$field]['title'] = $this->formatTitle($translation->trans($field));
+        $this->$fieldName[$field]['fieldtype'] = 'input';
+        $this->$fieldName[$field]['readOnly'] = true;
+        $this->$fieldName[$field]['hidden'] = $hidden;
     }
 
     private function formatTitle($title)

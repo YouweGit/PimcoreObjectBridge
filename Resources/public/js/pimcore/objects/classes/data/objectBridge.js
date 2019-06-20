@@ -629,7 +629,7 @@ pimcore.object.classes.data.objectBridge = Class.create(pimcore.object.classes.d
                     store.data.each(function (record) {
                         var objStore = pimcore.globalmanager.get('object_types_store');
                         var sourceClassDef = objStore.findRecord('text', this.datax.sourceAllowedClassName);
-                        // Remove all fields href's that are not linked to source object
+                        // Remove all fields many to one relations that are not linked to source object
                         if (
                             !record.data.layout.classes || !record.data.layout.classes[0] || !sourceClassDef || !sourceClassDef.data ||
                             record.data.layout.classes[0].classes !== sourceClassDef.data.text
