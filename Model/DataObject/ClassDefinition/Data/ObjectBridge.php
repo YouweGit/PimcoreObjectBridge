@@ -297,8 +297,13 @@ class ObjectBridge extends ClassDefinition\Data\Relations\AbstractRelations impl
                         }
                     }
 
-                    $bridgeFieldGetter = 'get' . $this->getBridgeField();
+                    $bridgeFieldName = $this->getBridgeField();
+                    $bridgeFieldGetter = 'get' . $bridgeFieldName;
                     $sourceObject = $bridgeObject->$bridgeFieldGetter();
+
+                    if (empty($sourceObject)) {
+                        throw new \RuntimeException("Relation '" . $bridgeFieldName . "' can not be empty for object with id " . $bridgeObject->getId());
+                    }
 
                     if (!$sourceObject instanceof Concrete) {
                         throw new \RuntimeException(sprintf('Database has an inconsistency, please remove object with id %s to fix the error', $bridgeObject->getId()));
