@@ -168,15 +168,21 @@ class ObjectBridge extends ClassDefinition\Data\Relations\AbstractRelations impl
      */
     public function loadData($data, $object = null, $params = [])
     {
-        $objects = [];
+        $objects = [
+            'dirty' => false,
+            'data' => []
+        ];
         if (is_array($data) && count($data) > 0) {
             foreach ($data as $object) {
                 $o = DataObject::getById($object['dest_id']);
                 if ($o instanceof DataObject\Concrete) {
-                    $objects[] = $o;
+                    $objects['data'][] = $o;
+                } else {
+                    $objects['dirty'] = true;
                 }
             }
         }
+
         //must return array - otherwise this means data is not loaded
         return $objects;
     }
@@ -261,7 +267,6 @@ class ObjectBridge extends ClassDefinition\Data\Relations\AbstractRelations impl
     {
         $return = [];
         if (is_array($data) && count($data) > 0) {
-
             $sourceClassDef = $this->getSourceClassDefinition();
             $bridgeClassDef = $this->getBridgeClassDefinition();
 
@@ -270,7 +275,6 @@ class ObjectBridge extends ClassDefinition\Data\Relations\AbstractRelations impl
             foreach ($data as $bridgeObject) {
 
                 if ($bridgeObject instanceof Concrete) {
-
                     $bridgeIdKey = ucfirst($bridgeClassDef->getName()) . '_id';
                     $columnData = [];
                     $columnData[$bridgeIdKey] = $bridgeObject->getId();
