@@ -161,6 +161,8 @@ pimcore.object.tags.objectBridge = Class.create(pimcore.object.tags.objects, {
                     data: layout.options
                 })
             });
+
+            // Todo: update, since href no longer exists
         } else if ((layout.fieldtype === "href" || layout.fieldtype === "hrefTypeahead") && !readOnly) {
             renderer = this.renderHrefWithValidation;
             minWidth = 200;
@@ -274,7 +276,7 @@ pimcore.object.tags.objectBridge = Class.create(pimcore.object.tags.objects, {
         columns.push(bridgeIdCol);
 
         for (i = 0; i < sourceVisibleFields.length; i++) {
-            if (!empty(sourceVisibleFields[i])) {
+            if (!empty(sourceVisibleFields[i]) && this.fieldConfig.sourceVisibleFieldDefinitions !== null) {
                 var sourceFieldLayout = this.fieldConfig.sourceVisibleFieldDefinitions[sourceVisibleFields[i]];
                 if (!sourceFieldLayout) {
                     throw new Error(sourceVisibleFields[i] + ' is missing from field definition, please add it under enrichLayoutDefinition at Pimcore\\Model\\Object\\ClassDefinition\\Data\\ObjectBridge');
@@ -284,7 +286,7 @@ pimcore.object.tags.objectBridge = Class.create(pimcore.object.tags.objects, {
         }
 
         for (i = 0; i < bridgeVisibleFields.length; i++) {
-            if (!empty(bridgeVisibleFields[i])) {
+            if (!empty(bridgeVisibleFields[i]) && this.fieldConfig.bridgeVisibleFieldDefinitions !== null) {
                 var bridgeFieldLayout = this.fieldConfig.bridgeVisibleFieldDefinitions[bridgeVisibleFields[i]];
                 if (!bridgeFieldLayout) {
                     throw new Error(bridgeVisibleFields[i] + ' is missing from field definition, please add it under enrichLayoutDefinition at Pimcore\\Model\\Object\\ClassDefinition\\Data\\ObjectBridge');

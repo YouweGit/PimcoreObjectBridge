@@ -10,11 +10,11 @@ pimcore.object.classes.data.objectBridge = Class.create(pimcore.object.classes.d
      */
     allowIn: {
         object: true,
-        objectbrick: true,
-        fieldcollection: true,
-        localizedfield: true,
+        objectbrick: false,
+        fieldcollection: false,
+        localizedfield: false,
         classificationstore: false,
-        block: true
+        block: false
     },
 
     initialize: function (treeNode, initData) {
@@ -23,7 +23,7 @@ pimcore.object.classes.data.objectBridge = Class.create(pimcore.object.classes.d
         this.initData(initData);
 
         if (typeof this.datax.lazyLoading == "undefined") {
-            this.datax.lazyLoading = true;
+            this.datax.lazyLoading = false;
         }
 
         if (typeof this.datax.decimalPrecision == "undefined") {
@@ -629,7 +629,7 @@ pimcore.object.classes.data.objectBridge = Class.create(pimcore.object.classes.d
                     store.data.each(function (record) {
                         var objStore = pimcore.globalmanager.get('object_types_store');
                         var sourceClassDef = objStore.findRecord('text', this.datax.sourceAllowedClassName);
-                        // Remove all fields href's that are not linked to source object
+                        // Remove all fields many to one relations that are not linked to source object
                         if (
                             !record.data.layout.classes || !record.data.layout.classes[0] || !sourceClassDef || !sourceClassDef.data ||
                             record.data.layout.classes[0].classes !== sourceClassDef.data.text
