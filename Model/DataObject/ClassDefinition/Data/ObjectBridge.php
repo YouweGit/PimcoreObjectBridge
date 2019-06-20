@@ -244,8 +244,8 @@ class ObjectBridge extends ClassDefinition\Data\ObjectsMetadata
                     $bridgeFieldGetter = 'get' . $bridgeFieldName;
                     $sourceObject = $bridgeObject->$bridgeFieldGetter();
 
-                    if(empty($sourceObject)){
-                        throw new \RuntimeException("Productsite $bridgeFieldName can not be empty for object with id ".$bridgeObject->getId());
+                    if (empty($sourceObject)) {
+                        throw new \RuntimeException("Relation '" . $bridgeFieldName . "' can not be empty for object with id " . $bridgeObject->getId());
                     }
 
                     if (!$sourceObject instanceof Concrete) {
