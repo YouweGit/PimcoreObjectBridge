@@ -52,7 +52,7 @@ pimcore.object.classes.data.objectBridge = Class.create(pimcore.object.classes.d
      * @returns {string}
      */
     getIconClass: function () {
-        return "pimcore_icon_multihref";
+        return "pimcore_icon_manyToManyObjectRelation";
     },
     /**
      * @param $super Magic parameter from prototype-js, php like parent::getLayout()
