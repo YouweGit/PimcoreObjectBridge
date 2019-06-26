@@ -13,3 +13,6 @@ services:
         tags:
             - { name: kernel.event_listener, event: pimcore.dataobject.preDelete, method: objectPreDelete }
 
+    ObjectBridgeBundle\EventListener\CopyEventListener:
+        tags:
+        - { name: kernel.event_listener, event: pimcore.dataobject.postCopy, method: postCopy }
