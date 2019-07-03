@@ -139,12 +139,11 @@ pimcore.object.tags.objectBridge = Class.create(pimcore.object.tags.objects, {
             return checkBoxColumn;
         }
 
-        else if (layout.fieldtype === "select") {
+        else if (layout.fieldtype === "select" && !readOnly) {
             renderer = this.renderDisplayField;
             editor = Ext.create('Ext.form.ComboBox', {
                 allowBlank: !layout.mandatory,
                 typeAhead: true,
-                readOnly: readOnly,
                 forceSelection: true,
                 mode: 'local',
                 queryMode: 'local',
@@ -161,17 +160,25 @@ pimcore.object.tags.objectBridge = Class.create(pimcore.object.tags.objects, {
                     data: layout.options
                 })
             });
-
-            // Todo: update, since href no longer exists
         } else if ((layout.fieldtype === "href" || layout.fieldtype === "hrefTypeahead") && !readOnly) {
             renderer = this.renderHrefWithValidation;
             minWidth = 200;
+
+            console.log(layout);
+
+            var show_trigger = false;
+            if(typeof layout.show_trigger != "undefined") {   // compatible with older versions' configs that don't have this setting!
+                if(layout.show_trigger) {
+                    show_trigger = true;
+                }
+            }
+
             editor = Ext.create('Ext.form.ComboBox', {
                 allowBlank: !layout.mandatory,
                 typeAhead: true,
                 forceSelection: false,
                 minChars: 2,
-                hideTrigger: true,
+                hideTrigger: !show_trigger,
                 mode: 'remote',
                 queryMode: 'remote',
                 valueField: 'id',
@@ -276,7 +283,7 @@ pimcore.object.tags.objectBridge = Class.create(pimcore.object.tags.objects, {
         columns.push(bridgeIdCol);
 
         for (i = 0; i < sourceVisibleFields.length; i++) {
-            if (!empty(sourceVisibleFields[i]) && this.fieldConfig.sourceVisibleFieldDefinitions !== null) {
+            if (!empty(sourceVisibleFields[i])) {
                 var sourceFieldLayout = this.fieldConfig.sourceVisibleFieldDefinitions[sourceVisibleFields[i]];
                 if (!sourceFieldLayout) {
                     throw new Error(sourceVisibleFields[i] + ' is missing from field definition, please add it under enrichLayoutDefinition at Pimcore\\Model\\Object\\ClassDefinition\\Data\\ObjectBridge');
@@ -286,7 +293,7 @@ pimcore.object.tags.objectBridge = Class.create(pimcore.object.tags.objects, {
         }
 
         for (i = 0; i < bridgeVisibleFields.length; i++) {
-            if (!empty(bridgeVisibleFields[i]) && this.fieldConfig.bridgeVisibleFieldDefinitions !== null) {
+            if (!empty(bridgeVisibleFields[i])) {
                 var bridgeFieldLayout = this.fieldConfig.bridgeVisibleFieldDefinitions[bridgeVisibleFields[i]];
                 if (!bridgeFieldLayout) {
                     throw new Error(bridgeVisibleFields[i] + ' is missing from field definition, please add it under enrichLayoutDefinition at Pimcore\\Model\\Object\\ClassDefinition\\Data\\ObjectBridge');
@@ -369,8 +376,8 @@ pimcore.object.tags.objectBridge = Class.create(pimcore.object.tags.objects, {
         var tbarItems = [
             {
                 xtype: 'tbspacer',
-                width: 24,
-                height: 24,
+                width: 20,
+                height: 16,
                 cls: 'pimcore_icon_droptarget'
             },
             {
