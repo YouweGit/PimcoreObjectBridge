@@ -105,7 +105,6 @@ class ObjectBridge extends ClassDefinition\Data\ObjectsMetadata
     public function getDataFromResource($data, $object = null, $params = [])
     {
         $objects = [];
-        \Pimcore\Log\Simple::log('objectbridge', var_export($data,true));
         if (is_array($data) && count($data) > 0) {
             foreach ($data as $objectData) {
                 $o = AbstractObject::getById($objectData['dest_id']);
@@ -956,6 +955,11 @@ class ObjectBridge extends ClassDefinition\Data\ObjectsMetadata
         // Dropdowns have options
         if ($fd instanceof ClassDefinition\Data\Select) {
             $this->$fieldName[ $field ]['options'] = $fd->getOptions();
+        }
+
+        // Hreftypeahead has showTrigger
+        if ($fd instanceof \PimcoreHrefTypeaheadBundle\Model\DataObject\Data\HrefTypeahead) {
+            $this->$fieldName[ $field ]['showTrigger'] = $fd->getShowTrigger();
         }
     }
 

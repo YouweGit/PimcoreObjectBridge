@@ -164,12 +164,13 @@ pimcore.object.tags.objectBridge = Class.create(pimcore.object.tags.objects, {
         } else if ((layout.fieldtype === "href" || layout.fieldtype === "hrefTypeahead") && !readOnly) {
             renderer = this.renderHrefWithValidation;
             minWidth = 200;
+            var showTrigger = (typeof layout.showTrigger !== "undefined" && layout.showTrigger);
             editor = Ext.create('Ext.form.ComboBox', {
                 allowBlank: !layout.mandatory,
                 typeAhead: true,
                 forceSelection: false,
                 minChars: 2,
-                hideTrigger: true,
+                hideTrigger: !showTrigger,
                 mode: 'remote',
                 queryMode: 'remote',
                 valueField: 'id',
