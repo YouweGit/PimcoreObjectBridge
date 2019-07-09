@@ -961,8 +961,6 @@ class ObjectBridge extends ClassDefinition\Data\ObjectsMetadata
         if ($fd instanceof \PimcoreHrefTypeaheadBundle\Model\DataObject\Data\HrefTypeahead) {
             $this->$fieldName[ $field ]['showTrigger'] = $fd->getShowTrigger();
         }
-
-
     }
 
     /**
