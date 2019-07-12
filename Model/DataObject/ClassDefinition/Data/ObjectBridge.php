@@ -1331,30 +1331,37 @@ class ObjectBridge extends ClassDefinition\Data\ObjectsMetadata
     {
         $data = null;
         if ($object instanceof DataObject\Concrete) {
-            $data = $object->getObjectVar($this->getName());
+            $data = $this->getObjectValue($object);
+
             if ($this->getLazyLoading() and !in_array($this->getName(), $object->getO__loadedLazyFields())) {
                 //$data = $this->getDataFromResource($object->getRelationData($this->getName(),true,null));
                 $data = $this->load($object, ['force' => true]);
 
-                $object->setObjectVar($this->getName(), $data);
-                $this->markLazyloadedFieldAsLoaded($object);
+                $this->setObjectValue($object, $data);
+
+                if (method_exists($this, 'markLazyloadedFieldAsLoaded')) {
+                    $this->markLazyloadedFieldAsLoaded($object);
+                }
             }
             $data = null;
             if ($object instanceof DataObject\Concrete) {
-                $data = $object->getObjectVar($this->getName());
+                $data = $this->getObjectValue($object);
                 if ($this->getLazyLoading() and !in_array($this->getName(), $object->getO__loadedLazyFields())) {
                     //$data = $this->getDataFromResource($object->getRelationData($this->getName(),true,null));
                     $data = $this->load($object, ['force' => true]);
 
-                    $object->setObjectVar($this->getName(), $data);
-                    $this->markLazyloadedFieldAsLoaded($object);
+                    $this->setObjectValue($object, $data);
+
+                    if (method_exists($this, 'markLazyloadedFieldAsLoaded')) {
+                        $this->markLazyloadedFieldAsLoaded($object);
+                    }
                 }
             } elseif ($object instanceof DataObject\Localizedfield) {
                 $data = $params['data'];
             } elseif ($object instanceof DataObject\Fieldcollection\Data\AbstractData) {
-                $data = $object->getObjectVar($this->getName());
+                $data = $this->getObjectValue($object);
             } elseif ($object instanceof DataObject\Objectbrick\Data\AbstractData) {
-                $data = $object->getObjectVar($this->getName());
+                $data = $this->getObjectValue($object);
             }
 
             if (DataObject\AbstractObject::doHideUnpublished() and is_array($data)) {
@@ -1369,6 +1376,38 @@ class ObjectBridge extends ClassDefinition\Data\ObjectsMetadata
             }
 
             return $data;
+        }
+    }
+
+    /**
+     * @param Model\AbstractModel $object
+     * @return mixed
+     */
+    protected function getObjectValue(Model\AbstractModel $object)
+    {
+        // Older Pimcore 5 versions don't have getObjectVar method
+        if (method_exists($object, 'getObjectVar')) {
+            return $object->getObjectVar($this->getName());
+        }
+
+        return $object->{$this->getName()};
+    }
+
+    /**
+     * @param Model\AbstractModel $object
+     * @param mixed $data
+     * @return void
+     */
+    protected function setObjectValue(Model\AbstractModel $object, $data)
+    {
+        // Older Pimcore 5 versions don't have setObjectVar method
+        if (method_exists($object, 'setObjectVar')) {
+            $object->setObjectVar($this->getName(), $data);
+        } else {
+            $setter = 'set' . ucfirst($this->getName());
+            if (method_exists($object, $setter)) {
+                $object->$setter($data);
+            }
         }
     }
 }
