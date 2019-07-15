@@ -202,6 +202,7 @@ pimcore.object.tags.objectBridge = Class.create(pimcore.object.tags.objects, {
                         },
                         extraParams: {
                             fieldName: layout.name,
+                            sourceId: this.object.id,
                             className: classNameText
                         }
                     },
