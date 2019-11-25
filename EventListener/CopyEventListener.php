@@ -6,7 +6,6 @@ use ObjectBridgeBundle\Model\DataObject\ClassDefinition\Data\ObjectBridge;
 use Pimcore\Event\Model\DataObjectEvent;
 use Pimcore\Model\DataObject;
 use Pimcore\Model\Element;
-use Pimcore\Model\Version;
 
 /**
  * Copy event listener
@@ -32,6 +31,7 @@ class CopyEventListener
     /**
      * @param DataObjectEvent $dataObjectEvent
      * @return void
+     * @throws \Exception
      */
     public function postCopy(DataObjectEvent $dataObjectEvent): void
     {
@@ -62,7 +62,7 @@ class CopyEventListener
         $bridgeDataObjectsSetter = 'set' . ucfirst($objectBridge->getName());
         unset($objectBridge);
 
-        if (!method_exists($dataObject, $bridgeDataObjectsGetter) || !method_exists($dataObject, $bridgeDataObjectsGetter)) {
+        if (!method_exists($dataObject, $bridgeDataObjectsGetter) || !method_exists($dataObject, $bridgeDataObjectsSetter)) {
             return;
         }
 
@@ -81,9 +81,11 @@ class CopyEventListener
     }
 
     /**
+     * @param DataObject\Concrete $dataObject
      * @param string $sourceDataObjectGetter
      * @param DataObject\Concrete ...$bridgeDataObjects
      * @return DataObject\Concrete[]
+     * @throws \Exception
      */
     protected function copyBridgeDataObjects(
         DataObject\Concrete $dataObject,
@@ -91,7 +93,6 @@ class CopyEventListener
         DataObject\Concrete ...$bridgeDataObjects
     ): array {
         $copiedBridgeDataObjects = [];
-        $i = 0;
         foreach ($bridgeDataObjects as $bridgeDataObject) {
             if (!$bridgeDataObject instanceof DataObject\Concrete) {
                 continue;
@@ -120,10 +121,11 @@ class CopyEventListener
      * @param DataObject\AbstractObject $target Folder to copy data object to
      * @param DataObject\Concrete $source Data object to copy
      * @return DataObject\Concrete
-     *
+     * @throws \Exception
      */
     protected function copyAsChild(DataObject\AbstractObject $target, DataObject\Concrete $source): DataObject\Concrete
     {
+        /* @var $new DataObject\Concrete */
         $new = Element\Service::cloneMe($source);
         $new->setId(null);
 
