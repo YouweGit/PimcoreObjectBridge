@@ -3,7 +3,6 @@
 namespace ObjectBridgeBundle\Model\DataObject\ClassDefinition\Data;
 
 use PDO;
-use Pimcore\Logger;
 use Pimcore\Model;
 use Pimcore\Model\Element;
 use Pimcore\Model\DataObject;
@@ -35,6 +34,7 @@ class ObjectBridge extends ClassDefinition\Data\Relations\AbstractRelations impl
      * @var string
      */
     public $sourceVisibleFields;
+
     /**
      * @var string
      */
@@ -76,7 +76,6 @@ class ObjectBridge extends ClassDefinition\Data\Relations\AbstractRelations impl
      *
      * @var string
      */
-
     public $phpdocType = "\\Pimcore\\Model\\DataObject\\AbstractObject[]";
 
     /** @var string */
@@ -84,6 +83,7 @@ class ObjectBridge extends ClassDefinition\Data\Relations\AbstractRelations impl
 
     /** @var string */
     public $bridgeVisibleFieldDefinitions;
+
     /** @var  bool */
     public $autoResize;
 
@@ -92,19 +92,23 @@ class ObjectBridge extends ClassDefinition\Data\Relations\AbstractRelations impl
 
     /** @var int */
     public $maxWidthResize;
+
     /** @var  bool */
     public $allowCreate;
+
     /** @var bool */
     public $allowDelete;
 
     /** @var string */
     public $bridgePrefix;
+
     /** @var string */
     public $sourcePrefix;
+
     /** @var string */
     public $decimalPrecision;
 
-    /** @var boolean */
+    /** @var bool */
     public $disableUpDown;
 
     /**
@@ -125,7 +129,8 @@ class ObjectBridge extends ClassDefinition\Data\Relations\AbstractRelations impl
     /**
      * Override to ensure lazy loading stays disabled by default
      *
-     * @return bool
+     * @param bool $lazyLoading
+     * @return self
      */
     public function setLazyLoading($lazyLoading)
     {
@@ -137,30 +142,26 @@ class ObjectBridge extends ClassDefinition\Data\Relations\AbstractRelations impl
      */
     public function prepareDataForPersistence($data, $object = null, $params = [])
     {
-        $return = [];
-
-        if (is_array($data) && count($data) > 0) {
-            $counter = 1;
-            foreach ($data as $object) {
-                if ($object instanceof DataObject\Concrete) {
-                    $return[] = [
-                        'dest_id'   => $object->getId(),
-                        'type'      => 'object',
-                        'fieldname' => $this->getName(),
-                        'index'     => $counter,
-                    ];
-                }
-                $counter++;
-            }
-
-            return $return;
-        } elseif (is_array($data) and count($data) === 0) {
-            //give empty array if data was not null
-            return [];
-        } else {
-            //return null if data was null - this indicates data was not loaded
+        if (!is_array($data)) {
             return null;
         }
+
+        $counter = 1;
+        $preparedData = [];
+        foreach ($data as $object) {
+            if ($object instanceof DataObject\Concrete) {
+                $preparedData[] = [
+                    'dest_id'   => $object->getId(),
+                    'type'      => 'object',
+                    'fieldname' => $this->getName(),
+                    'index'     => $counter,
+                ];
+            }
+
+            $counter++;
+        }
+
+        return $preparedData;
     }
 
     /**
@@ -172,18 +173,20 @@ class ObjectBridge extends ClassDefinition\Data\Relations\AbstractRelations impl
             'dirty' => false,
             'data' => []
         ];
-        if (is_array($data) && count($data) > 0) {
-            foreach ($data as $object) {
-                $o = DataObject::getById($object['dest_id']);
-                if ($o instanceof DataObject\Concrete) {
-                    $objects['data'][] = $o;
-                } else {
-                    $objects['dirty'] = true;
-                }
+
+        if (!is_array($data)) {
+            return $objects;
+        }
+
+        foreach ($data as $object) {
+            $distinationObject = DataObject::getById($object['dest_id']);
+            if ($distinationObject instanceof DataObject\Concrete) {
+                $objects['data'][] = $distinationObject;
+            } else {
+                $objects['dirty'] = true;
             }
         }
 
-        //must return array - otherwise this means data is not loaded
         return $objects;
     }
 
@@ -200,26 +203,29 @@ class ObjectBridge extends ClassDefinition\Data\Relations\AbstractRelations impl
      */
     public function getDataForQueryResource($data, $object = null, $params = [])
     {
-        //return null when data is not set
-        if (!$data) {
+        if ($this->isNullOrFalse($data)) {
             return null;
         }
 
-        $ids = [];
-
-        if (is_array($data) && count($data) > 0) {
-            foreach ($data as $object) {
-                if ($object instanceof DataObject\Concrete) {
-                    $ids[] = $object->getId();
-                }
-            }
-
-            return ',' . implode(',', $ids) . ',';
-        } elseif (is_array($data) && count($data) === 0) {
-            return '';
-        } else {
-            throw new \Exception('invalid data passed to getDataForQueryResource - must be array and it is: ' . print_r($data, true));
+        if (!is_array($data)) {
+            throw new \Exception(
+                'invalid data passed to getDataForQueryResource. Must be array and it is of type: ' . gettype($data),
+                1574671785
+            );
         }
+
+        $ids = [];
+        foreach ($data as $object) {
+            if ($object instanceof DataObject\Concrete) {
+                $ids[] = $object->getId();
+            }
+        }
+
+        if (empty($ids)) {
+            return '';
+        }
+
+        return ',' . implode(',', $ids) . ',';
     }
 
     /**
@@ -233,13 +239,14 @@ class ObjectBridge extends ClassDefinition\Data\Relations\AbstractRelations impl
     public function getDataFromResource($data, $object = null, $params = [])
     {
         $objects = [];
-        \Pimcore\Log\Simple::log('objectbridge', var_export($data, true));
-        if (is_array($data) && count($data) > 0) {
-            foreach ($data as $objectData) {
-                $o = AbstractObject::getById($objectData['dest_id']);
-                if ($o instanceof Concrete) {
-                    $objects[] = $o;
-                }
+        if ($this->isNotArrayOrEmpty($data)) {
+            return $objects;
+        }
+
+        foreach ($data as $objectData) {
+            $distinationObject = AbstractObject::getById($objectData['dest_id']);
+            if ($distinationObject instanceof Concrete) {
+                $objects[] = $distinationObject;
             }
         }
 
@@ -265,71 +272,81 @@ class ObjectBridge extends ClassDefinition\Data\Relations\AbstractRelations impl
      */
     public function getDataForEditmode($data, $object = null, $params = [])
     {
-        $return = [];
-        if (is_array($data) && count($data) > 0) {
-            $sourceClassDef = $this->getSourceClassDefinition();
-            $bridgeClassDef = $this->getBridgeClassDefinition();
-
-            $bridgeVisibleFieldsArray = $this->removeRestrictedKeys($this->getBridgeVisibleFieldsAsArray());
-
-            foreach ($data as $bridgeObject) {
-
-                if ($bridgeObject instanceof Concrete) {
-                    $bridgeIdKey = ucfirst($bridgeClassDef->getName()) . '_id';
-                    $columnData = [];
-                    $columnData[$bridgeIdKey] = $bridgeObject->getId();
-
-                    foreach ($bridgeVisibleFieldsArray as $bridgeVisibleField) {
-
-                        $fd = $bridgeClassDef->getFieldDefinition($bridgeVisibleField);
-                        $key = ucfirst($bridgeClassDef->getName()) . '_' . $bridgeVisibleField;
-                        if ($fd instanceof ClassDefinition\Data\ManyToOneRelation) {
-                            $valueObject = ObjectBridgeService::getValueForObject($bridgeObject, $bridgeVisibleField);
-
-                            // To avoid making too many requests to the server we add the display property on
-                            // run time but default path, but you can implement whatever to string method
-                            // Javascript will check if have a display property and use it
-
-                            $columnData[$key] = $valueObject ? $valueObject->getId() : null;
-                            $columnData[$key . '_display'] = $valueObject ? (string)$valueObject : null;
-                        } else {
-                            $columnData[$key] = ObjectBridgeService::getValueForObject($bridgeObject, $bridgeVisibleField);
-                        }
-                    }
-
-                    $bridgeFieldName = $this->getBridgeField();
-                    $bridgeFieldGetter = 'get' . $bridgeFieldName;
-                    $sourceObject = $bridgeObject->$bridgeFieldGetter();
-
-                    if (empty($sourceObject)) {
-                        throw new \RuntimeException("Relation '" . $bridgeFieldName . "' can not be empty for object with id " . $bridgeObject->getId());
-                    }
-
-                    if (!$sourceObject instanceof Concrete) {
-                        throw new \RuntimeException(sprintf('Database has an inconsistency, please remove object with id %s to fix the error', $bridgeObject->getId()));
-                    }
-
-                    $sourceIdKey = ucfirst($sourceClassDef->getName()) . '_id';
-                    $columnData[$sourceIdKey] = $sourceObject->getId();
-                    $sourceVisibleFieldsArray = $this->removeRestrictedKeys($this->getSourceVisibleFieldsAsArray());
-
-                    foreach ($sourceVisibleFieldsArray as $sourceVisibleField) {
-                        $fd = $sourceClassDef->getFieldDefinition($sourceVisibleField);
-                        $key = ucfirst($sourceClassDef->getName()) . '_' . $sourceVisibleField;
-
-                        if ($fd instanceof ClassDefinition\Data\ManyToOneRelation) {
-                            $valueObject = ObjectBridgeService::getValueForObjectToString($sourceObject, $sourceVisibleField);
-                            $columnData[$key] = $valueObject;
-                        } else {
-                            $columnData[$key] = ObjectBridgeService::getValueForObject($sourceObject, $sourceVisibleField);
-                        }
-                    }
-                    $return[] = $columnData;
-                }
-            }
+        $dataForEditMode = [];
+        if ($this->isNotArrayOrEmpty($data)) {
+            return $dataForEditMode;
         }
 
-        return $return;
+        $sourceClassDefinition = $this->getSourceClassDefinition();
+        $bridgeClassDefinition = $this->getBridgeClassDefinition();
+
+        $bridgeVisibleFieldsArray = $this->removeRestrictedKeys($this->getBridgeVisibleFieldsAsArray());
+
+        foreach ($data as $bridgeObject) {
+            if (!$bridgeObject instanceof Concrete) {
+                continue;
+            }
+
+            $bridgeIdKey = ucfirst($bridgeClassDefinition->getName()) . '_id';
+            $columnData = [];
+            $columnData[$bridgeIdKey] = $bridgeObject->getId();
+
+            foreach ($bridgeVisibleFieldsArray as $bridgeVisibleField) {
+                $fieldDefinition = $bridgeClassDefinition->getFieldDefinition($bridgeVisibleField);
+                $key = ucfirst($bridgeClassDefinition->getName()) . '_' . $bridgeVisibleField;
+
+                if (!$fieldDefinition instanceof ClassDefinition\Data\ManyToOneRelation) {
+                    $columnData[$key] = $bridgeObject->get($bridgeVisibleField);
+                    continue;
+                }
+
+                $valueObject = $bridgeObject->get($bridgeVisibleField);
+
+                // To avoid making too many requests to the server we add the display property on
+                // run time but default path, but you can implement whatever to string method
+                // Javascript will check if have a display property and use it
+
+                $columnData[$key] = $valueObject ? $valueObject->getId() : null;
+                $columnData[$key . '_display'] = $valueObject ? (string)$valueObject : null;
+            }
+
+            $bridgeFieldName = $this->getBridgeField();
+            $bridgeFieldGetter = 'get' . $bridgeFieldName;
+            $sourceObject = $bridgeObject->$bridgeFieldGetter();
+
+            if (empty($sourceObject)) {
+                throw new \RuntimeException(
+                    "Relation '" . $bridgeFieldName . "' can not be empty for object with id " . $bridgeObject->getId(),
+                    1574671786
+                );
+            }
+
+            if (!$sourceObject instanceof Concrete) {
+                throw new \RuntimeException(
+                    sprintf('Database has an inconsistency, please remove object with id %s to fix the error', $bridgeObject->getId()),
+                    1574671787
+                );
+            }
+
+            $sourceIdKey = ucfirst($sourceClassDefinition->getName()) . '_id';
+            $columnData[$sourceIdKey] = $sourceObject->getId();
+            $sourceVisibleFieldsArray = $this->removeRestrictedKeys($this->getSourceVisibleFieldsAsArray());
+
+            foreach ($sourceVisibleFieldsArray as $sourceVisibleField) {
+                $fieldDefinition = $sourceClassDefinition->getFieldDefinition($sourceVisibleField);
+                $key = ucfirst($sourceClassDefinition->getName()) . '_' . $sourceVisibleField;
+
+                if ($fieldDefinition instanceof ClassDefinition\Data\ManyToOneRelation) {
+                    $valueObject = (string)$sourceObject->get($sourceVisibleField);
+                    $columnData[$key] = $valueObject;
+                } else {
+                    $columnData[$key] = $sourceObject->get($sourceVisibleField);
+                }
+            }
+            $dataForEditMode[] = $columnData;
+        }
+
+        return $dataForEditMode;
     }
 
     /**
@@ -338,92 +355,89 @@ class ObjectBridge extends ClassDefinition\Data\Relations\AbstractRelations impl
      * @param null|Concrete $object
      * @param mixed $params
      * @return array
-     * @throws \Zend_Db_Statement_Exception
      * @throws \Exception
-     * @throws \InvalidArgumentException
-     * @throws \DI\NotFoundException
-     * @throws \DI\DependencyException
      */
     public function getDataFromEditmode($data, $object = null, $params = [])
     {
-
         //if not set, return null
         if ($data === null || $data === false) {
             return null;
         }
 
         $objectsBridge = [];
-        if (is_array($data) && count($data) > 0) {
-            $sourceClassDef = $this->getSourceClassDefinition();
-            $bridgeClassDef = $this->getBridgeClassDefinition();
-            /** @var AbstractObject|string $sourceClass */
-            $sourceClass = $this->getSourceFullClassName();
-            /** @var AbstractObject|string $bridgeClass */
-            $bridgeClass = $this->getBridgeFullClassName();
-            $idSourceFieldKey = $sourceClassDef->getName() . '_id';
+        if ($this->isNotArrayOrEmpty($data)) {
+            return $objectsBridge;
+        }
 
-            foreach ($data as $objectData) {
-                $sourceId = $objectData[$idSourceFieldKey];
-                $bridgeObjectId = $this->getBridgeIdBySourceAndOwner($object, $bridgeClass, $sourceId);
+        $sourceClassDef = $this->getSourceClassDefinition();
+        $bridgeClassDef = $this->getBridgeClassDefinition();
+        /** @var AbstractObject|string $sourceClass */
+        $sourceClass = $this->getSourceFullClassName();
+        /** @var AbstractObject|string $bridgeClass */
+        $bridgeClass = $this->getBridgeFullClassName();
+        $idSourceFieldKey = $sourceClassDef->getName() . '_id';
 
+        foreach ($data as $objectData) {
+            $sourceId = $objectData[$idSourceFieldKey];
+            $bridgeObjectId = $this->getBridgeIdBySourceAndOwner($object, $bridgeClass, $sourceId);
 
-                $sourceObject = $sourceClass::getById($sourceId);
-                /** @var Concrete $bridgeObject */
-                if (!$bridgeObjectId) {
-                    $bridgeObject = new $bridgeClass;
-                    $parent = Model\DataObject\Service::createFolderByPath($this->bridgeFolder);
-                    if (!$parent instanceof AbstractObject) {
-                        throw new \InvalidArgumentException(sprintf('Parent not found at "%s" please check your object bridge configuration "Bridge folder"', $this->bridgeFolder));
+            $sourceObject = $sourceClass::getById($sourceId);
+            /** @var Concrete $bridgeObject */
+            if (!$bridgeObjectId) {
+                $bridgeObject = new $bridgeClass;
+                $parent = Model\DataObject\Service::createFolderByPath($this->bridgeFolder);
+                if (!$parent instanceof AbstractObject) {
+                    throw new \InvalidArgumentException(
+                        sprintf('Parent not found at "%s" please check your object bridge configuration "Bridge folder"', $this->bridgeFolder),
+                        1574671788
+                    );
+                }
+                $bridgeObject->setParent($parent);
+                $bridgeObject->setKey($this->bridgePrefix . $object->getId() . '_' . $sourceObject->getId());
+                $bridgeObject->setPublished(false);
+                // Make sure its unique else saving will throw an error
+                $bridgeObject->setKey(Model\DataObject\Service::getUniqueKey($bridgeObject));
+            } else {
+                $bridgeObject = $bridgeClass::getById($bridgeObjectId);
+            }
+
+            // Store data to bridge object
+            $bridgeVisibleFieldsArray = $this->getBridgeVisibleFieldsAsArray();
+            // Id should be never be edited
+            $bridgeVisibleFieldsArray = $this->removeRestrictedKeys($bridgeVisibleFieldsArray);
+
+            foreach ($bridgeVisibleFieldsArray as $bridgeVisibleField) {
+                $fieldDefinition = $bridgeClassDef->getFieldDefinition($bridgeVisibleField);
+
+                $key = ucfirst($bridgeClassDef->getName()) . '_' . $bridgeVisibleField;
+                if (!array_key_exists($key, $objectData)) {
+                    continue;
+                }
+
+                if ($fieldDefinition instanceof ClassDefinition\Data\ManyToOneRelation) {
+                    $valueObject = $this->getObjectForManyToOneRelation($fieldDefinition, $objectData[$key]);
+                    $bridgeObject->set($bridgeVisibleField, $valueObject);
+                } elseif ($fieldDefinition instanceof ClassDefinition\Data\Date) {
+                    if (!empty($objectData[$key]['date']) && is_string($objectData[$key]['date'])) {
+                        $bridgeObject->set($bridgeVisibleField, new \DateTime($objectData[$key]['date']));
+                    } elseif (!empty($objectData[$key]) && is_string($objectData[$key])) {
+                        $bridgeObject->set($bridgeVisibleField, new \DateTime($objectData[$key]));
                     }
-                    $bridgeObject->setParent($parent);
-                    $bridgeObject->setKey($this->bridgePrefix . $object->getId() . '_' . $sourceObject->getId());
-                    $bridgeObject->setPublished(false);
-                    // Make sure its unique else saving will throw an error
-                    $bridgeObject->setKey(Model\DataObject\Service::getUniqueKey($bridgeObject));
                 } else {
-                    $bridgeObject = $bridgeClass::getById($bridgeObjectId);
+                    $bridgeObject->set($bridgeVisibleField, $objectData[$key]);
                 }
+            }
 
-                // Store data to bridge object
-                $bridgeVisibleFieldsArray = $this->getBridgeVisibleFieldsAsArray();
-                // Id should be never be edited
-                $bridgeVisibleFieldsArray = $this->removeRestrictedKeys($bridgeVisibleFieldsArray);
+            $bridgeObject->set($this->bridgeField, $sourceObject);
+            $bridgeObject->setOmitMandatoryCheck(true);
+            $bridgeObject->setPublished($object->getPublished());
+            $bridgeObject->save();
 
-                foreach ($bridgeVisibleFieldsArray as $bridgeVisibleField) {
-                    $fd = $bridgeClassDef->getFieldDefinition($bridgeVisibleField);
-
-                    $key = ucfirst($bridgeClassDef->getName()) . '_' . $bridgeVisibleField;
-                    if (array_key_exists($key, $objectData)) {
-                        $setter = 'set' . ucfirst($bridgeVisibleField);
-
-                        if ($fd instanceof ClassDefinition\Data\ManyToOneRelation) {
-                            $valueObject = $this->getObjectForManyToOneRelation($fd, $objectData[$key]);
-                            $bridgeObject->$setter($valueObject);
-                        } elseif ($fd instanceof ClassDefinition\Data\Date) {
-                            if (!empty($objectData[$key]["date"]) && is_string($objectData[$key]["date"])) {
-                                $bridgeObject->$setter(new \DateTime($objectData[$key]["date"]));
-                            } elseif (!empty($objectData[$key]) && is_string($objectData[$key])) {
-                                $bridgeObject->$setter(new \DateTime($objectData[$key]));
-                            }
-                        } else {
-                            $bridgeObject->$setter($objectData[$key]);
-                        }
-                    }
-                }
-
-                $bridgeFieldSetter = 'set' . ucfirst($this->bridgeField);
-                $bridgeObject->$bridgeFieldSetter($sourceObject);
-                $bridgeObject->setOmitMandatoryCheck(true);
-                $bridgeObject->setPublished($object->getPublished());
-                $bridgeObject->save();
-
-                if ($bridgeObject && $bridgeObject->getClassName() === $this->getBridgeAllowedClassName()) {
-                    $objectsBridge[] = $bridgeObject;
-                }
+            if ($bridgeObject && $bridgeObject->getClassName() === $this->getBridgeAllowedClassName()) {
+                $objectsBridge[] = $bridgeObject;
             }
         }
 
-        //must return array if data shall be set
         return $objectsBridge;
     }
 
@@ -519,7 +533,6 @@ class ObjectBridge extends ClassDefinition\Data\Relations\AbstractRelations impl
      * @param Concrete|string $bridgeClass
      * @param int $sourceId
      * @return null|int
-     * @throws \Zend_Db_Statement_Exception
      */
     private function getBridgeIdBySourceAndOwner($object, $bridgeClass, $sourceId)
     {
@@ -537,22 +550,23 @@ class ObjectBridge extends ClassDefinition\Data\Relations\AbstractRelations impl
     }
 
     /**
-     * @param ClassDefinition\Data\ManyToOneRelation $fd
+     * @param ClassDefinition\Data\ManyToOneRelation $fieldDefinition
      * @param string|int $value
      * @return null|AbstractObject
      */
-    private function getObjectForManyToOneRelation($fd, $value)
+    private function getObjectForManyToOneRelation(ClassDefinition\Data\ManyToOneRelation $fieldDefinition, $value)
     {
-        $class = current($fd->getClasses());
-        if ($class && is_array($class) && array_key_exists('classes', $class)) {
+        $object = null;
+        $class = current($fieldDefinition->getClasses());
+        if (is_array($class) && array_key_exists('classes', $class)) {
             $class = $class['classes'];
             /** @var AbstractObject $className */
             $className = '\\Pimcore\\Model\\DataObject\\' . $class;
 
-            return $className::getById($value);
+            $object = $className::getById($value);
         }
 
-        return null;
+        return $object;
     }
 
     /**
@@ -582,18 +596,18 @@ class ObjectBridge extends ClassDefinition\Data\Relations\AbstractRelations impl
      */
     public function getDataForGrid($data, $object = null, $params = [])
     {
-        if (is_array($data)) {
-            $paths = [];
-            foreach ($data as $eo) {
-                if ($eo instanceof Element\ElementInterface) {
-                    $paths[] = (string)$eo;
-                }
-            }
-
-            return $paths;
+        if (!is_array($data)) {
+            return null;
         }
 
-        return null;
+        $paths = [];
+        foreach ($data as $element) {
+            if ($element instanceof Element\ElementInterface) {
+                $paths[] = (string)$element;
+            }
+        }
+
+        return $paths;
     }
 
     /**
@@ -601,54 +615,64 @@ class ObjectBridge extends ClassDefinition\Data\Relations\AbstractRelations impl
      * @param array $data
      * @param null|AbstractObject $object
      * @param mixed $params
-     * @return string
+     * @return string|null
      */
     public function getVersionPreview($data, $object = null, $params = [])
     {
-        if (is_array($data) && count($data) > 0) {
-            $paths = [];
-            foreach ($data as $o) {
-                if ($o instanceof Element\ElementInterface) {
-                    $paths[] = (string)$o;
-                }
-            }
-
-            return implode('<br />', $paths);
+        if ($this->isNotArrayOrEmpty($data)) {
+            return null;
         }
 
-        return null;
+        $paths = [];
+        foreach ($data as $element) {
+            if ($element instanceof Element\ElementInterface) {
+                $paths[] = (string)$element;
+            }
+        }
+
+        return implode('<br />', $paths);
     }
 
     /**
      * Checks if data is valid for current data field
      *
      * @param mixed $data
-     * @param boolean $omitMandatoryCheck
+     * @param bool $omitMandatoryCheck
      * @throws \Exception
      */
     public function checkValidity($data, $omitMandatoryCheck = false)
     {
         if (!$omitMandatoryCheck && $this->getMandatory() && empty($data)) {
-            throw new Element\ValidationException('Empty mandatory field [ ' . $this->getName() . ' ]');
+            throw new Element\ValidationException(
+                'Empty mandatory field [ ' . $this->getName() . ' ]',
+                1574671789
+            );
         }
-        if (is_array($data)) {
-            /** @var Concrete $objectBridge */
-            foreach ($data as $objectBridge) {
-                $bridgeClassFullName = $this->getBridgeFullClassName();
-                if (!($objectBridge instanceof $bridgeClassFullName)) {
-                    throw new Element\ValidationException('Expected ' . $bridgeClassFullName);
-                }
-                foreach ($objectBridge->getClass()->getFieldDefinitions() as $fieldDefinition) {
-                    $fieldDefinition->checkValidity(
-                        ObjectBridgeService::getValueForObject($objectBridge, $fieldDefinition->getName()),
-                        $omitMandatoryCheck
-                    );
-                }
 
-                if (!($objectBridge instanceof Concrete) || $objectBridge->getClassName() !== $this->getBridgeAllowedClassName()) {
-                    $id = $objectBridge instanceof Concrete ? $objectBridge->getId() : '??';
-                    throw new Element\ValidationException('Invalid object relation to object [' . $id . '] in field ' . $this->getName());
-                }
+        if (!is_array($data)) {
+            return;
+        }
+
+        /** @var Concrete $objectBridge */
+        foreach ($data as $objectBridge) {
+            $bridgeClassFullName = $this->getBridgeFullClassName();
+            if (!($objectBridge instanceof $bridgeClassFullName)) {
+                throw new Element\ValidationException('Expected ' . $bridgeClassFullName, 1574671790);
+            }
+
+            foreach ($objectBridge->getClass()->getFieldDefinitions() as $fieldDefinition) {
+                $fieldDefinition->checkValidity(
+                    $objectBridge->get($fieldDefinition->getName()),
+                    $omitMandatoryCheck
+                );
+            }
+
+            if (!($objectBridge instanceof Concrete) || $objectBridge->getClassName() !== $this->getBridgeAllowedClassName()) {
+                $id = $objectBridge instanceof Concrete ? $objectBridge->getId() : '??';
+                throw new Element\ValidationException(
+                    'Invalid object relation to object [' . $id . '] in field ' . $this->getName(),
+                    1574671791
+                );
             }
         }
     }
@@ -656,32 +680,34 @@ class ObjectBridge extends ClassDefinition\Data\Relations\AbstractRelations impl
     /**
      * Default functionality from ClassDefinition\Data\Object::getFromCsvImport
      * Converts object data to a simple string value or CSV Export
-     * @abstract
+     *
      * @param AbstractObject $object
      * @param array $params
-     * @return string
+     * @return string|null
+     * @throws \Exception
      */
     public function getForCsvExport($object, $params = [])
     {
         /** @var array $data */
         $data = $this->getDataFromObjectParam($object, $params);
-        if (is_array($data)) {
-            $paths = [];
-            foreach ($data as $eo) {
-                if ($eo instanceof Element\ElementInterface) {
-                    $paths[] = $eo->getRealFullPath();
-                }
-            }
-
-            return implode(',', $paths);
-        } else {
+        if (!is_array($data)) {
             return null;
         }
+
+        $paths = [];
+        foreach ($data as $eo) {
+            if ($eo instanceof Element\ElementInterface) {
+                $paths[] = $eo->getRealFullPath();
+            }
+        }
+
+        return implode(',', $paths);
     }
 
     /**
      * Default functionality from ClassDefinition\Data\Object::getFromCsvImport
      * Will import comma separated paths
+     *
      * @param mixed $importValue
      * @param null|AbstractObject $object
      * @param mixed $params
@@ -713,11 +739,13 @@ class ObjectBridge extends ClassDefinition\Data\Relations\AbstractRelations impl
     {
         $tags = is_array($tags) ? $tags : [];
 
-        if (is_array($data) && count($data) > 0) {
-            foreach ($data as $object) {
-                if ($object instanceof Element\ElementInterface && !array_key_exists($object->getCacheTag(), $tags)) {
-                    $tags = $object->getCacheTags($tags);
-                }
+        if ($this->isNotArrayOrEmpty($data)) {
+            return $tags;
+        }
+
+        foreach ($data as $object) {
+            if ($object instanceof Element\ElementInterface && !array_key_exists($object->getCacheTag(), $tags)) {
+                $tags = $object->getCacheTags($tags);
             }
         }
 
@@ -726,21 +754,23 @@ class ObjectBridge extends ClassDefinition\Data\Relations\AbstractRelations impl
 
     /**
      * Default functionality from ClassDefinition\Data\Object::resolveDependencies
-     * @param $data
+     *
+     * @param array $data
      * @return array
      */
     public function resolveDependencies($data)
     {
         $dependencies = [];
+        if ($this->isNotArrayOrEmpty($data)) {
+            return $dependencies;
+        }
 
-        if (is_array($data) && count($data) > 0) {
-            foreach ($data as $o) {
-                if ($o instanceof AbstractObject) {
-                    $dependencies['object_' . $o->getId()] = [
-                        'id'   => $o->getId(),
-                        'type' => 'object',
-                    ];
-                }
+        foreach ($data as $object) {
+            if ($object instanceof AbstractObject) {
+                $dependencies['object_' . $object->getId()] = [
+                    'id'   => $object->getId(),
+                    'type' => 'object',
+                ];
             }
         }
 
@@ -749,33 +779,31 @@ class ObjectBridge extends ClassDefinition\Data\Relations\AbstractRelations impl
 
     /**
      * Default functionality from ClassDefinition\Data\Object::getForWebserviceExport
+     *
      * @param AbstractObject $object
-     * @param mixed $params
-     * @return array|mixed|null
+     * @param array $params
+     * @return array|null
+     * @throws \Exception
      */
     public function getForWebserviceExport($object, $params = [])
     {
         $data = $this->getDataFromObjectParam($object, $params);
-        if (is_array($data)) {
-            $items = [];
-            foreach ($data as $eo) {
-                if ($eo instanceof Element\ElementInterface) {
-                    $items[] = [
-                        'type' => $eo->getType(),
-                        'id'   => $eo->getId(),
-                    ];
-                }
-            }
-
-            return $items;
-        } else {
+        if (!is_array($data)) {
             return null;
         }
-    }
 
-    /** @noinspection MoreThanThreeArgumentsInspection
-     * Method has to stay compatible with pimcore
-     */
+        $items = [];
+        foreach ($data as $element) {
+            if ($element instanceof Element\ElementInterface) {
+                $items[] = [
+                    'type' => $element->getType(),
+                    'id'   => $element->getId(),
+                ];
+            }
+        }
+
+        return $items;
+    }
 
     /**
      * Default functionality from ClassDefinition\Data\Object::getFromWebserviceImport
@@ -788,35 +816,44 @@ class ObjectBridge extends ClassDefinition\Data\Relations\AbstractRelations impl
      */
     public function getFromWebserviceImport($value, $object = null, $params = [], $idMapper = null)
     {
-        $relatedObjects = [];
-        if (!$value) {
+        if ($this->isNullOrFalse($value)) {
             return null;
-        } elseif (is_array($value)) {
-            foreach ($value as $key => $item) {
-                $item = (array)$item;
-                $id = $item['id'];
+        }
 
-                if ($idMapper) {
-                    $id = $idMapper->getMappedId('object', $id);
-                }
+        if (!is_array($value)) {
+            throw new \InvalidArgumentException(
+                'Cannot get values from web service import - invalid data',
+                1574671792
+            );
+        }
 
-                $relatedObject = null;
-                if ($id) {
-                    $relatedObject = AbstractObject::getById($id);
-                }
+        $relatedObjects = [];
+        foreach ($value as $key => $item) {
+            $item = (array)$item;
+            $id = $item['id'];
 
-                if ($relatedObject instanceof AbstractObject) {
-                    $relatedObjects[] = $relatedObject;
-                } else {
-                    if (!$idMapper || !$idMapper->ignoreMappingFailures()) {
-                        throw new \InvalidArgumentException('Cannot get values from web service import - references unknown object with id [ ' . $item['id'] . ' ]');
-                    } else {
-                        $idMapper->recordMappingFailure('object', $object->getId(), 'object', $item['id']);
-                    }
-                }
+            if ($idMapper) {
+                $id = $idMapper->getMappedId('object', $id);
             }
-        } else {
-            throw new \InvalidArgumentException('Cannot get values from web service import - invalid data');
+
+            $relatedObject = null;
+            if ($id) {
+                $relatedObject = AbstractObject::getById($id);
+            }
+
+            if ($relatedObject instanceof AbstractObject) {
+                $relatedObjects[] = $relatedObject;
+                continue;
+            }
+
+            if (!$idMapper || !$idMapper->ignoreMappingFailures()) {
+                throw new \InvalidArgumentException(
+                    'Cannot get values from web service import - references unknown object with id [ ' . $item['id'] . ' ]',
+                    1574671793
+                );
+            }
+
+            $idMapper->recordMappingFailure('object', $object->getId(), 'object', $item['id']);
         }
 
         return $relatedObjects;
@@ -857,7 +894,8 @@ class ObjectBridge extends ClassDefinition\Data\Relations\AbstractRelations impl
      * @param mixed $object
      * @param array $idMapping
      * @param array $params
-     * @return Element\ElementInterface
+     * @return array
+     * @throws \Exception
      */
     public function rewriteIds($object, $idMapping, $params = [])
     {
@@ -910,142 +948,152 @@ class ObjectBridge extends ClassDefinition\Data\Relations\AbstractRelations impl
         $bridgeClass = ClassDefinition::getByName($this->bridgeAllowedClassName);
 
         foreach ($this->getSourceVisibleFieldsAsArray() as $field) {
-            $fd = $sourceClass->getFieldDefinition($field);
-            if (!$fd) {
-                $fieldFound = false;
-                /** @var ClassDefinition $localizedfields */
-                if ($localizedfields = $sourceClass->getFieldDefinitions()['localizedfields']) {
-                    /**
-                     * @var ClassDefinition\Data $fd
-                     */
-                    if ($fd = $localizedfields->getFieldDefinition($field)) {
-                        $fieldFound = true;
-                        $isHidden = $this->sourceFieldIsHidden($field);
-                        $this->setFieldDefinition('sourceVisibleFieldDefinitions', $fd, $field, true, $isHidden);
-                    }
-                }
-                // Give up it's a system field
-                if (!$fieldFound) {
-                    $isHidden = $this->sourceFieldIsHidden($field);
-                    $this->setSystemFieldDefinition('sourceVisibleFieldDefinitions', $field, $isHidden);
-                }
-            } else {
+            $fieldDefinition = $sourceClass->getFieldDefinition($field);
+            if ($fieldDefinition instanceof ClassDefinition\Data) {
                 $isHidden = $this->sourceFieldIsHidden($field);
-                $this->setFieldDefinition('sourceVisibleFieldDefinitions', $fd, $field, true, $isHidden);
+                $this->setFieldDefinition('sourceVisibleFieldDefinitions', $fieldDefinition, $field, true, $isHidden);
+                continue;
+            }
+
+            // Fallback to localized fields
+            $fieldFound = false;
+            /** @var ClassDefinition $localizedfields */
+            if ($localizedfields = $sourceClass->getFieldDefinitions()['localizedfields']) {
+                /**
+                 * @var ClassDefinition\Data $fieldDefinition
+                 */
+                if ($fieldDefinition = $localizedfields->getFieldDefinition($field)) {
+                    $fieldFound = true;
+                    $isHidden = $this->sourceFieldIsHidden($field);
+                    $this->setFieldDefinition('sourceVisibleFieldDefinitions', $fieldDefinition, $field, true, $isHidden);
+                }
+            }
+
+            // Give up, it's a system field
+            if (!$fieldFound) {
+                $isHidden = $this->sourceFieldIsHidden($field);
+                $this->setSystemFieldDefinition('sourceVisibleFieldDefinitions', $field, $isHidden);
             }
         }
 
         foreach ($this->getBridgeVisibleFieldsAsArray() as $field) {
-            $fd = $bridgeClass->getFieldDefinition($field);
+            $fieldDefinition = $bridgeClass->getFieldDefinition($field);
 
-            if (!$fd) {
-                $fieldFound = false;
-                if ($localizedfields = $bridgeClass->getFieldDefinitions()['localizedfields']) {
-                    /** @var ClassDefinition\Data $fd */
-                    if ($fd = $localizedfields->getFieldDefinition($field)) {
-                        $fieldFound = true;
-                        $isHidden = $this->bridgeFieldIsHidden($field);
-                        $this->setFieldDefinition('bridgeVisibleFieldDefinitions', $fd, $field, false, $isHidden);
-                    }
-                }
-
-                // Give up it's a system field
-                if (!$fieldFound) {
-                    $isHidden = $this->bridgeFieldIsHidden($field);
-                    $this->setSystemFieldDefinition('bridgeVisibleFieldDefinitions', $field, $isHidden);
-                }
-
-            } else {
+            if ($fieldDefinition instanceof ClassDefinition\Data) {
                 $isHidden = $this->bridgeFieldIsHidden($field);
-                $this->setFieldDefinition('bridgeVisibleFieldDefinitions', $fd, $field, false, $isHidden);
-            }
-        }
-    }
-
-    /** Encode value for packing it into a single column.
-     * @param mixed $value
-     * @param Model\DataObject\AbstractObject $object
-     * @param mixed $params
-     *
-     * @return mixed
-     */
-    public function marshal($value, $object = null, $params = [])
-    {
-        if (is_array($value)) {
-            $result = [];
-            foreach ($value as $element) {
-                $type = Element\Service::getType($element);
-                $id = $element->getId();
-                $result[] = [
-                    'type' => $type,
-                    'id'   => $id,
-                ];
+                $this->setFieldDefinition('bridgeVisibleFieldDefinitions', $fieldDefinition, $field, false, $isHidden);
+                continue;
             }
 
-            return $result;
-        }
-
-        return null;
-    }
-
-    /** See marshal
-     * @param mixed $value
-     * @param Model\DataObject\AbstractObject $object
-     * @param mixed $params
-     *
-     * @return mixed
-     */
-    public function unmarshal($value, $object = null, $params = [])
-    {
-        if (is_array($value)) {
-            $result = [];
-            foreach ($value as $elementData) {
-                $type = $elementData['type'];
-                $id = $elementData['id'];
-                $element = Element\Service::getElementById($type, $id);
-                if ($element) {
-                    $result[] = $element;
+            // Fallback to localized fields
+            $fieldFound = false;
+            if ($localizedfields = $bridgeClass->getFieldDefinitions()['localizedfields']) {
+                /** @var ClassDefinition\Data $fieldDefinition */
+                if ($fieldDefinition = $localizedfields->getFieldDefinition($field)) {
+                    $fieldFound = true;
+                    $isHidden = $this->bridgeFieldIsHidden($field);
+                    $this->setFieldDefinition('bridgeVisibleFieldDefinitions', $fieldDefinition, $field, false, $isHidden);
                 }
             }
 
-            return $result;
+            // Give up, it's a system field
+            if (!$fieldFound) {
+                $isHidden = $this->bridgeFieldIsHidden($field);
+                $this->setSystemFieldDefinition('bridgeVisibleFieldDefinitions', $field, $isHidden);
+            }
         }
     }
 
     /**
-     * @param string $fieldName
-     * ex . sourceVisibleFieldDefinitions or bridgeVisibleFieldDefinitions
-     * @param ClassDefinition\Data $fd
+     * Encode value for packing it into a single column.
+     *
+     * @param mixed $value
+     * @param Model\DataObject\AbstractObject $object
+     * @param mixed $params
+     * @return array|null
+     */
+    public function marshal($value, $object = null, $params = [])
+    {
+        if (!is_array($value)) {
+            return null;
+        }
+
+        $result = [];
+        foreach ($value as $element) {
+            $type = Element\Service::getType($element);
+            $id = $element->getId();
+            $result[] = [
+                'type' => $type,
+                'id'   => $id,
+            ];
+        }
+
+        return $result;
+    }
+
+    /**
+     * See marshal
+     *
+     * @param mixed $value
+     * @param Model\DataObject\AbstractObject $object
+     * @param mixed $params
+     * @return array|null
+     */
+    public function unmarshal($value, $object = null, $params = [])
+    {
+        if (!is_array($value)) {
+            return null;
+        }
+
+        $result = [];
+        foreach ($value as $elementData) {
+            $type = $elementData['type'];
+            $id = $elementData['id'];
+            $element = Element\Service::getElementById($type, $id);
+            if ($element) {
+                $result[] = $element;
+            }
+        }
+
+        return $result;
+    }
+
+    /**
+     * @param string $fieldName sourceVisibleFieldDefinitions or bridgeVisibleFieldDefinitions
+     * @param ClassDefinition\Data $fieldDefinition
      * @param string $field
      * @param bool $readOnly
      * @param bool $hidden
      */
-    private function setFieldDefinition($fieldName, $fd, $field, $readOnly, $hidden)
-    {
-        $this->$fieldName[$field]['name'] = $fd->getName();
-        $this->$fieldName[$field]['title'] = $this->formatTitle($fd->getTitle());
-        $this->$fieldName[$field]['fieldtype'] = $fd->getFieldtype();
-        $this->$fieldName[$field]['readOnly'] = $readOnly || $fd->getNoteditable() ? true : false;
+    private function setFieldDefinition(
+        string $fieldName,
+        ClassDefinition\Data $fieldDefinition,
+        string $field,
+        bool $readOnly,
+        bool $hidden
+    ) {
+        $this->$fieldName[$field]['name'] = $fieldDefinition->getName();
+        $this->$fieldName[$field]['title'] = $this->formatTitle($fieldDefinition->getTitle());
+        $this->$fieldName[$field]['fieldtype'] = $fieldDefinition->getFieldtype();
+        $this->$fieldName[$field]['readOnly'] = $readOnly || $fieldDefinition->getNoteditable() ? true : false;
         $this->$fieldName[$field]['hidden'] = $hidden;
-        $this->$fieldName[$field]['mandatory'] = $fd->getMandatory();
+        $this->$fieldName[$field]['mandatory'] = $fieldDefinition->getMandatory();
 
         // Add default value if any is set
-        if (method_exists($fd, 'getDefaultValue') && strlen(strval($fd->getDefaultValue())) > 0) {
-            $this->$fieldName[$field]['default'] = $fd->getDefaultValue();
+        if (method_exists($fieldDefinition, 'getDefaultValue') && strlen(strval($fieldDefinition->getDefaultValue())) > 0) {
+            $this->$fieldName[$field]['default'] = $fieldDefinition->getDefaultValue();
         }
 
         // Dropdowns have options
-        if ($fd instanceof ClassDefinition\Data\Select) {
-            $this->$fieldName[$field]['options'] = $fd->getOptions();
+        if ($fieldDefinition instanceof ClassDefinition\Data\Select) {
+            $this->$fieldName[$field]['options'] = $fieldDefinition->getOptions();
         }
     }
 
     /**
-     * @param string $fieldName
-     * ex . sourceVisibleFieldDefinitions or bridgeVisibleFieldDefinitions
+     * @param string $fieldName sourceVisibleFieldDefinitions or bridgeVisibleFieldDefinitions
      * @param string $field
      * @param bool $hidden
-     * @throws \Zend_Exception
      */
     private function setSystemFieldDefinition($fieldName, $field, $hidden)
     {
@@ -1058,7 +1106,7 @@ class ObjectBridge extends ClassDefinition\Data\Relations\AbstractRelations impl
         $this->$fieldName[$field]['hidden'] = $hidden;
     }
 
-    private function formatTitle($title)
+    private function formatTitle($title): ?string
     {
         if ($this->newLineSplit) {
             return preg_replace('/\s+/', '<br/>', $title);
@@ -1175,7 +1223,7 @@ class ObjectBridge extends ClassDefinition\Data\Relations\AbstractRelations impl
     }
 
     /**
-     * @return string
+     * @return array
      */
     public function getSourceHiddenFieldsAsArray()
     {
@@ -1209,7 +1257,7 @@ class ObjectBridge extends ClassDefinition\Data\Relations\AbstractRelations impl
     }
 
     /**
-     * @return string
+     * @return array
      */
     public function getBridgeHiddenFieldsAsArray()
     {
@@ -1218,7 +1266,7 @@ class ObjectBridge extends ClassDefinition\Data\Relations\AbstractRelations impl
 
 
     /**
-     * @param $bridgeHiddenFields
+     * @param array $bridgeHiddenFields
      * @return $this
      */
     public function setBridgeHiddenFields($bridgeHiddenFields)
@@ -1239,7 +1287,7 @@ class ObjectBridge extends ClassDefinition\Data\Relations\AbstractRelations impl
      * @param string $name
      * @return bool
      */
-    private function bridgeFieldIsHidden($name)
+    private function bridgeFieldIsHidden($name): bool
     {
         return in_array($name, $this->getBridgeHiddenFieldsAsArray(), true);
     }
@@ -1248,7 +1296,7 @@ class ObjectBridge extends ClassDefinition\Data\Relations\AbstractRelations impl
      * @param string $name
      * @return bool
      */
-    private function sourceFieldIsHidden($name)
+    private function sourceFieldIsHidden($name): bool
     {
         return in_array($name, $this->getSourceHiddenFieldsAsArray(), true);
     }
@@ -1286,7 +1334,7 @@ class ObjectBridge extends ClassDefinition\Data\Relations\AbstractRelations impl
     }
 
     /**
-     * @return boolean
+     * @return bool
      */
     public function getNewLineSplit()
     {
@@ -1294,7 +1342,7 @@ class ObjectBridge extends ClassDefinition\Data\Relations\AbstractRelations impl
     }
 
     /**
-     * @param boolean $newLineSplit
+     * @param bool $newLineSplit
      */
     public function setNewLineSplit($newLineSplit)
     {
@@ -1302,7 +1350,7 @@ class ObjectBridge extends ClassDefinition\Data\Relations\AbstractRelations impl
     }
 
     /**
-     * @return boolean
+     * @return bool
      */
     public function getAllowCreate()
     {
@@ -1310,15 +1358,15 @@ class ObjectBridge extends ClassDefinition\Data\Relations\AbstractRelations impl
     }
 
     /**
-     * @param boolean $newLineSplit
+     * @param bool $allowCreate
      */
-    public function setAllowCreate($ac)
+    public function setAllowCreate($allowCreate)
     {
-        $this->allowCreate = $ac;
+        $this->allowCreate = $allowCreate;
     }
 
     /**
-     * @return boolean
+     * @return bool
      */
     public function getAllowDelete()
     {
@@ -1326,11 +1374,11 @@ class ObjectBridge extends ClassDefinition\Data\Relations\AbstractRelations impl
     }
 
     /**
-     * @param boolean $newLineSplit
+     * @param bool $allowDelete
      */
-    public function setAllowDelete($ac)
+    public function setAllowDelete($allowDelete)
     {
-        $this->allowDelete = $ac;
+        $this->allowDelete = $allowDelete;
     }
 
     /**
@@ -1342,7 +1390,7 @@ class ObjectBridge extends ClassDefinition\Data\Relations\AbstractRelations impl
     }
 
     /**
-     * @param string $newLineSplit
+     * @param string $sourcePrefix
      */
     public function setSourcePrefix($sourcePrefix)
     {
@@ -1358,7 +1406,7 @@ class ObjectBridge extends ClassDefinition\Data\Relations\AbstractRelations impl
     }
 
     /**
-     * @param string $newLineSplit
+     * @param string $bridgePrefix
      */
     public function setBridgePrefix($bridgePrefix)
     {
@@ -1382,7 +1430,7 @@ class ObjectBridge extends ClassDefinition\Data\Relations\AbstractRelations impl
     }
 
     /**
-     * @param boolean $value
+     * @param bool $value
      */
     public function setDisableUpDown($value)
     {
@@ -1390,7 +1438,7 @@ class ObjectBridge extends ClassDefinition\Data\Relations\AbstractRelations impl
     }
 
     /**
-     * @return boolean
+     * @return bool
      */
     public function getdisableUpDown()
     {
@@ -1427,8 +1475,8 @@ class ObjectBridge extends ClassDefinition\Data\Relations\AbstractRelations impl
     /**
      * @param $object
      * @param array $params
-     *
      * @return array|mixed|null
+     * @throws \Exception
      */
     public function preGetData($object, $params = [])
     {
@@ -1489,5 +1537,23 @@ class ObjectBridge extends ClassDefinition\Data\Relations\AbstractRelations impl
         $this->markLazyloadedFieldAsLoaded($object);
 
         return $data;
+    }
+
+    /**
+     * @param mixed $value
+     * @return bool
+     */
+    protected function isNotArrayOrEmpty($value): bool
+    {
+        return !is_array($value) || empty($value);
+    }
+
+    /**
+     * @param mixed $value
+     * @return bool
+     */
+    protected function isNullOrFalse($value): bool
+    {
+        return $value === null || $value === false;
     }
 }
