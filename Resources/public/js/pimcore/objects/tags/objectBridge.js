@@ -97,61 +97,73 @@ pimcore.object.tags.objectBridge = Class.create(pimcore.object.tags.objects, {
     getColumnFromLayout: function (classNameText, layout, readOnly, prefix) {
         var editor = null,
             renderer = null,
-            minWidth = 40;
+            minWidth = 40,
+            filter = {type: null};
 
         readOnly = (readOnly || layout.readOnly);
         prefix = ((prefix + ' ') || (''));
 
-        if (layout.fieldtype === "input" && !readOnly) {
-            editor = {
-                xtype: 'textfield',
-                allowBlank: !layout.mandatory
-            };
-            renderer = this.renderWithValidation;
-        }
-        else if (layout.fieldtype === "numeric" && !readOnly) {
-            renderer = this.renderWithValidation;
-            var decimalPrecision = Ext.isNumeric(this.fieldConfig.decimalPrecision) ? this.fieldConfig.decimalPrecision : 2;
-            editor = {
-                xtype: 'numberfield',
-                decimalPrecision: decimalPrecision,
-                allowBlank: !layout.mandatory
-            };
-        }
-        else if (layout.fieldtype === "checkbox") {
-            // There seems to be a problem with Ext checkbox column
-            // As a workaround we will skip the composition of the element and return
-            // it as soon as possible meaning all general stuff on bottom of
-            // this function will be passed directly to this column
+        switch (layout.fieldtype) {
+            case 'input':
+                if (readOnly) {
+                    break;
+                }
 
-            var checkBoxColumn = Ext.create('Ext.grid.column.Check', {
-                text: layout.title,
-                width: 40,
-                align: 'left',
-                hidden: !!layout.hidden,
-                sortable: true,
-                dataIndex: classNameText + '_' + layout.name
-            });
+                renderer = this.renderWithValidation;
+                filter.type = 'string';
 
-            if (readOnly) {
-                checkBoxColumn.setDisabled(true);
-            }
-            return checkBoxColumn;
-        }
+                editor = {
+                    xtype: 'textfield',
+                    allowBlank: !layout.mandatory
+                };
 
-        else if (layout.fieldtype === "select") {
-            renderer = this.renderDisplayField;
-            editor = Ext.create('Ext.form.ComboBox', {
-                allowBlank: !layout.mandatory,
-                typeAhead: true,
-                readOnly: readOnly,
-                forceSelection: true,
-                mode: 'local',
-                queryMode: 'local',
-                valueField: 'value',
-                displayField: 'key',
-                anyMatch: true,
-                store: Ext.create('Ext.data.JsonStore', {
+                break;
+
+            case 'numeric':
+                if (readOnly) {
+                    break;
+                }
+
+                renderer = this.renderWithValidation;
+                filter.type = 'number';
+                var decimalPrecision = Ext.isNumeric(this.fieldConfig.decimalPrecision) ? this.fieldConfig.decimalPrecision : 2;
+
+                editor = {
+                    xtype: 'numberfield',
+                    decimalPrecision: decimalPrecision,
+                    allowBlank: !layout.mandatory
+                };
+
+                break;
+
+            case 'checkbox':
+                // There seems to be a problem with Ext checkbox column
+                // As a workaround we will skip the composition of the element and return
+                // it as soon as possible meaning all general stuff on bottom of
+                // this function will be passed directly to this column
+
+                var checkBoxColumn = Ext.create('Ext.grid.column.Check', {
+                    text: layout.title,
+                    width: 40,
+                    align: 'left',
+                    hidden: !!layout.hidden,
+                    sortable: true,
+                    dataIndex: classNameText + '_' + layout.name,
+                    filter: {
+                        // required configs
+                        type: 'boolean'
+                    }
+                });
+
+                if (readOnly) {
+                    checkBoxColumn.setDisabled(true);
+                }
+
+                return checkBoxColumn;
+
+            case 'select':
+                renderer = this.renderDisplayField;
+                var store = Ext.create('Ext.data.JsonStore', {
                     proxy: {
                         type: 'memory',
                         reader: 'json'
@@ -159,74 +171,106 @@ pimcore.object.tags.objectBridge = Class.create(pimcore.object.tags.objects, {
                     idProperty: 'value',
                     fields: ['value', 'key'],
                     data: layout.options
-                })
-            });
+                });
 
-            // Todo: update, since href no longer exists
-        } else if ((layout.fieldtype === "href" || layout.fieldtype === "hrefTypeahead") && !readOnly) {
-            renderer = this.renderHrefWithValidation;
-            minWidth = 200;
-            editor = Ext.create('Ext.form.ComboBox', {
-                allowBlank: !layout.mandatory,
-                typeAhead: true,
-                forceSelection: false,
-                minChars: 2,
-                hideTrigger: true,
-                mode: 'remote',
-                queryMode: 'remote',
-                valueField: 'id',
-                displayField: 'display',
-                enableKeyEvents: true,
-                onFocus: function(e) {
-                    var me = this;
-                    me.setValue(null);
-                },
-                listeners : {
-                    keyup: function (e) {
-                        var pendingOperations = this.getStore().getProxy().pendingOperations;
-                        Ext.Object.eachValue(pendingOperations, function (pendingOperation) {
-                            pendingOperation.abort();
-                        });
-                    }
-                },
-                store: Ext.create('Ext.data.JsonStore', {
-                    autoLoad: false,
-                    remoteSort: true,
-                    pageSize: 10,
-                    proxy: {
-                        type: 'ajax',
-                        url: '/admin/href-typeahead/find',
-                        reader: {
-                            type: 'json',
-                            rootProperty: 'data'
-                        },
-                        extraParams: {
-                            fieldName: layout.name,
-                            sourceId: this.object.id,
-                            className: classNameText
+                filter = {
+                    type: 'list',
+                    labelField: 'key',
+                    idField: 'value',
+                    options: store
+                };
+                editor = Ext.create('Ext.form.ComboBox', {
+                    allowBlank: !layout.mandatory,
+                    typeAhead: true,
+                    readOnly: readOnly,
+                    forceSelection: true,
+                    mode: 'local',
+                    queryMode: 'local',
+                    valueField: 'value',
+                    displayField: 'key',
+                    anyMatch: true,
+                    store: store
+                });
+
+                break;
+
+            case 'date':
+                if (readOnly) {
+                    break;
+                }
+
+                renderer = this.renderDate,
+                    editor = {
+                        xtype: 'datefield',
+                        format: 'm/d/Y',
+                        allowBlank: !layout.mandatory
+                    };
+                filter.type = 'date';
+
+                break;
+
+            case 'href':
+            case 'hrefTypeahead':
+                if (readOnly) {
+                    break;
+                }
+
+                renderer = this.renderHrefWithValidation;
+                minWidth = 200;
+                var showTrigger = (typeof layout.showTrigger !== 'undefined' && layout.showTrigger);
+
+                editor = Ext.create('Ext.form.ComboBox', {
+                    allowBlank: !layout.mandatory,
+                    typeAhead: true,
+                    forceSelection: false,
+                    minChars: 2,
+                    hideTrigger: !showTrigger,
+                    mode: 'remote',
+                    queryMode: 'remote',
+                    valueField: 'id',
+                    displayField: 'display',
+                    enableKeyEvents: true,
+                    onFocus: function(e) {
+                        var me = this;
+                        me.setValue(null);
+                    },
+                    listeners : {
+                        keyup: function (e) {
+                            var pendingOperations = this.getStore().getProxy().pendingOperations;
+                            Ext.Object.eachValue(pendingOperations, function (pendingOperation) {
+                                pendingOperation.abort();
+                            });
                         }
                     },
-                    fields: ['id', 'dest_id', 'display', 'type', 'subtype', 'path', 'fullpath']
-                })
-            });
-        } else if(layout.fieldtype === "date" && !readOnly) {
-            renderer = this.renderDate,
-                editor = {
-                    xtype: 'datefield',
-                    format: 'm/d/Y',
-                    allowBlank: !layout.mandatory
-                };
+                    store: Ext.create('Ext.data.JsonStore', {
+                        autoLoad: false,
+                        remoteSort: true,
+                        pageSize: 10,
+                        proxy: {
+                            type: 'ajax',
+                            url: '/admin/href-typeahead/find',
+                            reader: {
+                                type: 'json',
+                                rootProperty: 'data'
+                            },
+                            extraParams: {
+                                fieldName: layout.name,
+                                sourceId: this.object.id,
+                                className: classNameText
+                            }
+                        },
+                        fields: ['id', 'dest_id', 'display', 'type', 'subtype', 'path', 'fullpath']
+                    })
+                });
 
-        }
-        else {
-            // Ext.log(layout.fieldtype + ' is not implemented and will be read only');
+                break;
         }
 
-        //Bug fix for different title sizes (https://github.com/YouweGit/PimcoreObjectBridge/issues/8) still BC
-        var title = "";
-        if(prefix.length > 1){
+        // Bug fix for different title sizes (https://github.com/YouweGit/PimcoreObjectBridge/issues/8) still BC
+        var title = '';
+        if (prefix.length > 1){
             title = prefix + '<br/>' + layout.title;
-        }else{
+        } else{
             title = layout.title;
         }
 
@@ -236,7 +280,8 @@ pimcore.object.tags.objectBridge = Class.create(pimcore.object.tags.objects, {
             editor: editor,
             renderer: renderer,
             sortable: true,
-            minWidth: minWidth
+            minWidth: minWidth,
+            filter: filter
         });
 
         column.hidden = layout.hidden;
@@ -409,6 +454,7 @@ pimcore.object.tags.objectBridge = Class.create(pimcore.object.tags.objects, {
 
         this.component = Ext.create('Ext.grid.Panel', {
             store: this.store,
+            plugins: 'gridfilters',
             border: true,
             style: "margin-bottom: 10px",
             enableDragDrop: true,
