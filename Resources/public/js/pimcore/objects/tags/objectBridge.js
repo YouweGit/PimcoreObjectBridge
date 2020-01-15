@@ -279,7 +279,7 @@ pimcore.object.tags.objectBridge = Class.create(pimcore.object.tags.objects, {
             title = layout.title;
         }
 
-        if (!this.fieldConfig.enableFiltering || filter.type === null) {
+        if (!this.fieldConfig.enableFiltering) {
             filter = null;
         }
 
@@ -465,7 +465,8 @@ pimcore.object.tags.objectBridge = Class.create(pimcore.object.tags.objects, {
         var plugins = [
             Ext.create('Ext.grid.plugin.CellEditing', {
                 clicksToEdit: 1
-            }),'pimcore.gridfilters'
+            }),
+            'pimcore.gridfilters'
         ];
 
         var selectionModel = 'Ext.selection.RowModel';
@@ -475,7 +476,6 @@ pimcore.object.tags.objectBridge = Class.create(pimcore.object.tags.objects, {
 
         this.component = Ext.create('Ext.grid.Panel', {
             store: this.store,
-            plugins: 'gridfilters',
             border: true,
             style: "margin-bottom: 10px",
             enableDragDrop: true,
@@ -508,6 +508,13 @@ pimcore.object.tags.objectBridge = Class.create(pimcore.object.tags.objects, {
         }
         if (this.fieldConfig.autoResize) {
             this.component.view.addListener('refresh', this.onRefreshComponent.bind(this));
+
+            // Trigger refresh to autoresize columns again after filtering
+            if (this.fieldConfig.enableFiltering) {
+                this.component.addListener('filterchange', function () {
+                    this.component.view.refresh();
+                }.bind(this));
+            }
         }
 
         this.component.reference = this;
