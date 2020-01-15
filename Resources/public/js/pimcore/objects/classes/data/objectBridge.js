@@ -258,6 +258,16 @@ pimcore.object.classes.data.objectBridge = Class.create(pimcore.object.classes.d
             value: this.datax.maxWidthResize
         }, {
             xtype: "checkbox",
+            fieldLabel: t("enable_filtering"),
+            name: "enableFiltering",
+            checked: this.datax.enableFiltering
+        }, {
+            xtype: "checkbox",
+            fieldLabel: t("enable_batch_edit"),
+            name: "enableBatchEdit",
+            checked: this.datax.enableBatchEdit
+        }, {
+            xtype: "checkbox",
             fieldLabel: t("allow_create"),
             name: "allowCreate",
             checked: this.datax.allowCreate
@@ -683,6 +693,8 @@ pimcore.object.classes.data.objectBridge = Class.create(pimcore.object.classes.d
                 autoResize: source.datax.autoResize,
                 maxWidthResize: source.datax.maxWidthResize,
                 newLineSplit: source.datax.newLineSplit,
+                enableFiltering: source.datax.enableFiltering,
+                enableBatchEdit: source.datax.enableBatchEdit,
                 sourceAllowedClassName: source.datax.sourceAllowedClassName,
                 sourceVisibleFields: source.datax.sourceVisibleFields,
                 sourceHiddenFields: source.datax.sourceHiddenFields,
