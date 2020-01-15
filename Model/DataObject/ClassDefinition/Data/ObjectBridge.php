@@ -63,7 +63,6 @@ class ObjectBridge extends ClassDefinition\Data\ObjectsMetadata
      *
      * @var string
      */
-
     public $phpdocType = "\\Pimcore\\Model\\DataObject\\AbstractObject[]";
 
     /** @var string */
@@ -71,23 +70,34 @@ class ObjectBridge extends ClassDefinition\Data\ObjectsMetadata
 
     /** @var string */
     public $bridgeVisibleFieldDefinitions;
-    /** @var  bool */
+
+    /** @var bool */
     public $autoResize;
 
-    /** @var  bool */
+    /** @var bool */
     public $newLineSplit;
 
     /** @var int */
     public $maxWidthResize;
-    /** @var  bool */
+
+    /** @var bool */
+    public $enableFiltering;
+
+    /** @var bool */
+    public $enableBatchEdit;
+
+    /** @var bool */
     public $allowCreate;
+
     /** @var bool */
     public $allowDelete;
 
     /** @var string */
     public $bridgePrefix;
+
     /** @var string */
     public $sourcePrefix;
+
     /** @var string */
     public $decimalPrecision;
 
@@ -1225,6 +1235,38 @@ class ObjectBridge extends ClassDefinition\Data\ObjectsMetadata
     }
 
     /**
+     * @return bool
+     */
+    public function getEnableFiltering()
+    {
+        return $this->enableFiltering;
+    }
+
+    /**
+     * @param bool $enableFiltering
+     */
+    public function setEnableFiltering($enableFiltering)
+    {
+        $this->enableFiltering = $enableFiltering;
+    }
+
+    /**
+     * @return bool
+     */
+    public function getEnableBatchEdit()
+    {
+        return $this->enableBatchEdit;
+    }
+
+    /**
+     * @param bool $enableBatchEdit
+     */
+    public function setEnableBatchEdit($enableBatchEdit)
+    {
+        $this->enableBatchEdit = $enableBatchEdit;
+    }
+
+    /**
      * @return boolean
      */
     public function getAllowCreate()
@@ -1319,7 +1361,7 @@ class ObjectBridge extends ClassDefinition\Data\ObjectsMetadata
     {
         return $this->disableUpDown;
     }
-    
+
 
     /**
      * @param $object

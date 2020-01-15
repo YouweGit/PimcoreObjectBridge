@@ -143,6 +143,12 @@ pimcore.object.tags.objectBridge = Class.create(pimcore.object.tags.objects, {
                 // it as soon as possible meaning all general stuff on bottom of
                 // this function will be passed directly to this column
 
+                if (this.fieldConfig.enableFiltering) {
+                    filter.type = 'boolean';
+                } else {
+                    filter = null;
+                }
+
                 var checkBoxColumn = Ext.create('Ext.grid.column.Check', {
                     text: layout.title,
                     width: 40,
@@ -150,10 +156,7 @@ pimcore.object.tags.objectBridge = Class.create(pimcore.object.tags.objects, {
                     hidden: !!layout.hidden,
                     sortable: true,
                     dataIndex: classNameText + '_' + layout.name,
-                    filter: {
-                        // required configs
-                        type: 'boolean'
-                    },
+                    filter: filter,
                     layout: layout
                 });
 
@@ -274,6 +277,10 @@ pimcore.object.tags.objectBridge = Class.create(pimcore.object.tags.objects, {
             title = prefix + '<br/>' + layout.title;
         } else{
             title = layout.title;
+        }
+
+        if (!this.fieldConfig.enableFiltering || filter.type === null) {
+            filter = null;
         }
 
         var column = Ext.create('Ext.grid.column.Column', {
@@ -461,6 +468,11 @@ pimcore.object.tags.objectBridge = Class.create(pimcore.object.tags.objects, {
             }),'pimcore.gridfilters'
         ];
 
+        var selectionModel = 'Ext.selection.RowModel';
+        if (this.fieldConfig.enableBatchEdit) {
+            selectionModel = 'Ext.selection.CheckboxModel';
+        }
+
         this.component = Ext.create('Ext.grid.Panel', {
             store: this.store,
             plugins: 'gridfilters',
@@ -469,7 +481,7 @@ pimcore.object.tags.objectBridge = Class.create(pimcore.object.tags.objects, {
             enableDragDrop: true,
             ddGroup: 'element',
             trackMouseOver: true,
-            selModel: Ext.create('Ext.selection.CheckboxModel', {}),
+            selModel: Ext.create(selectionModel, {}),
             columnLines: true,
             stripeRows: true,
             columns: columns,
@@ -534,30 +546,32 @@ pimcore.object.tags.objectBridge = Class.create(pimcore.object.tags.objects, {
                     }.bind(this)
                 });
 
-                // Add 'batch edit selected' menu item to column header menu
-                var batchEditSelectedMenuItem = new Ext.menu.Item({
-                    text: t('batch_change_selected'),
-                    iconCls: "pimcore_icon_table pimcore_icon_overlay_go",
-                    handler: function (grid) {
+                if (this.fieldConfig.enableBatchEdit) {
+                    // Add 'batch edit selected' menu item to column header menu
+                    var batchEditSelectedMenuItem = new Ext.menu.Item({
+                        text: t('batch_change_selected'),
+                        iconCls: "pimcore_icon_table pimcore_icon_overlay_go",
+                        handler: function (grid) {
+                            var menu = grid.headerCt.getMenu();
+                            var columnDataIndex = menu.activeHeader.fullColumnIndex;
+                            this.batchOpen(columnDataIndex);
+                        }.bind(this, this.component)
+                    });
+                    var menu = this.component.headerCt.getMenu();
+                    menu.add(batchEditSelectedMenuItem);
+
+                    // Only show batch edit for bridge data object columns and when at least 1 row is selected
+                    menu.on('beforeshow', function (batchEditSelectedMenuItem, grid) {
                         var menu = grid.headerCt.getMenu();
-                        var columnDataIndex = menu.activeHeader.fullColumnIndex;
-                        this.batchOpen(columnDataIndex);
-                    }.bind(this, this.component)
-                });
-                var menu = this.component.headerCt.getMenu();
-                menu.add(batchEditSelectedMenuItem);
+                        var columnDataIndex = menu.activeHeader.dataIndex;
 
-                // Only show batch edit for bridge data object columns and when at least 1 row is selected
-                menu.on('beforeshow', function (batchEditSelectedMenuItem, grid) {
-                    var menu = grid.headerCt.getMenu();
-                    var columnDataIndex = menu.activeHeader.dataIndex;
-
-                    if (grid.getSelectionModel().hasSelection() && Ext.Array.contains(bridgeFieldDataIndices, columnDataIndex)) {
-                        batchEditSelectedMenuItem.show();
-                    } else {
-                        batchEditSelectedMenuItem.hide();
-                    }
-                }.bind(this, batchEditSelectedMenuItem, this.component));
+                        if (grid.getSelectionModel().hasSelection() && Ext.Array.contains(bridgeFieldDataIndices, columnDataIndex)) {
+                            batchEditSelectedMenuItem.show();
+                        } else {
+                            batchEditSelectedMenuItem.hide();
+                        }
+                    }.bind(this, batchEditSelectedMenuItem, this.component));
+                }
             }.bind(this));
         }
 
