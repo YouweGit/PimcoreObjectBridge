@@ -7,6 +7,7 @@ pimcore.object.tags.objectBridge = Class.create(pimcore.object.tags.objects, {
 
     type: "objectBridge",
     dataChanged: false,
+    batchWindow: null,
 
     initialize: function (data, fieldConfig) {
 
@@ -152,7 +153,8 @@ pimcore.object.tags.objectBridge = Class.create(pimcore.object.tags.objects, {
                     filter: {
                         // required configs
                         type: 'boolean'
-                    }
+                    },
+                    layout: layout
                 });
 
                 if (readOnly) {
@@ -278,6 +280,7 @@ pimcore.object.tags.objectBridge = Class.create(pimcore.object.tags.objects, {
             text: title,
             dataIndex: classNameText + '_' + layout.name,
             editor: editor,
+            layout: layout,
             renderer: renderer,
             sortable: true,
             minWidth: minWidth,
@@ -327,18 +330,24 @@ pimcore.object.tags.objectBridge = Class.create(pimcore.object.tags.objects, {
                 if (!sourceFieldLayout) {
                     throw new Error(sourceVisibleFields[i] + ' is missing from field definition, please add it under enrichLayoutDefinition at Pimcore\\Model\\Object\\ClassDefinition\\Data\\ObjectBridge');
                 }
-                columns.push(this.getColumnFromLayout(this.sourceClassName, sourceFieldLayout, true, this.fieldConfig.sourcePrefix));
+                columns.push(
+                    this.getColumnFromLayout(this.sourceClassName, sourceFieldLayout, true, this.fieldConfig.sourcePrefix)
+                );
             }
         }
 
+        var bridgeFieldDataIndices = [];
         for (i = 0; i < bridgeVisibleFields.length; i++) {
             if (!empty(bridgeVisibleFields[i]) && this.fieldConfig.bridgeVisibleFieldDefinitions !== null) {
                 var bridgeFieldLayout = this.fieldConfig.bridgeVisibleFieldDefinitions[bridgeVisibleFields[i]];
                 if (!bridgeFieldLayout) {
                     throw new Error(bridgeVisibleFields[i] + ' is missing from field definition, please add it under enrichLayoutDefinition at Pimcore\\Model\\Object\\ClassDefinition\\Data\\ObjectBridge');
                 }
-                var column = this.getColumnFromLayout(this.bridgeClassName, bridgeFieldLayout, readOnly, this.fieldConfig.bridgePrefix);
-                columns.push(column);
+                columns.push(
+                    this.getColumnFromLayout(this.bridgeClassName, bridgeFieldLayout, readOnly, this.fieldConfig.bridgePrefix)
+                );
+
+                bridgeFieldDataIndices.push(this.bridgeClassName + '_' + bridgeFieldLayout.name);
             }
         }
 
@@ -460,7 +469,7 @@ pimcore.object.tags.objectBridge = Class.create(pimcore.object.tags.objects, {
             enableDragDrop: true,
             ddGroup: 'element',
             trackMouseOver: true,
-            selModel: Ext.create('Ext.selection.RowModel', {}),
+            selModel: Ext.create('Ext.selection.CheckboxModel', {}),
             columnLines: true,
             stripeRows: true,
             columns: columns,
@@ -499,7 +508,6 @@ pimcore.object.tags.objectBridge = Class.create(pimcore.object.tags.objects, {
                     ddGroup: 'element',
                     getTargetFromEvent: function (e) {
                         return this.component.getEl().dom;
-                        //return e.getTarget(this.grid.getView().rowSelector);
                     }.bind(this),
                     onNodeOver: function (overHtmlNode, ddSource, e, data) {
                         var record = data.records[0];
@@ -514,7 +522,6 @@ pimcore.object.tags.objectBridge = Class.create(pimcore.object.tags.objects, {
                     onNodeDrop: function (target, dd, e, data) {
 
                         var record = data.records[0];
-                        // var data = ;
                         var fromTree = this.isFromTree(dd);
 
                         if (this.dndAllowed(record.data, fromTree)) {
@@ -526,9 +533,95 @@ pimcore.object.tags.objectBridge = Class.create(pimcore.object.tags.objects, {
                         return false;
                     }.bind(this)
                 });
+
+                // Add 'batch edit selected' menu item to column header menu
+                var batchEditSelectedMenuItem = new Ext.menu.Item({
+                    text: t('batch_change_selected'),
+                    iconCls: "pimcore_icon_table pimcore_icon_overlay_go",
+                    handler: function (grid) {
+                        var menu = grid.headerCt.getMenu();
+                        var columnDataIndex = menu.activeHeader.fullColumnIndex;
+                        this.batchOpen(columnDataIndex);
+                    }.bind(this, this.component)
+                });
+                var menu = this.component.headerCt.getMenu();
+                menu.add(batchEditSelectedMenuItem);
+
+                // Only show batch edit for bridge data object columns and when at least 1 row is selected
+                menu.on('beforeshow', function (batchEditSelectedMenuItem, grid) {
+                    var menu = grid.headerCt.getMenu();
+                    var columnDataIndex = menu.activeHeader.dataIndex;
+
+                    if (grid.getSelectionModel().hasSelection() && Ext.Array.contains(bridgeFieldDataIndices, columnDataIndex)) {
+                        batchEditSelectedMenuItem.show();
+                    } else {
+                        batchEditSelectedMenuItem.hide();
+                    }
+                }.bind(this, batchEditSelectedMenuItem, this.component));
             }.bind(this));
         }
+
         return this.component;
+    },
+
+    /**
+     * @see pimcore.object.helpers.gridTabAbstract.batchOpen()
+     */
+    batchOpen: function (columnIndex) {
+        var fieldInfo = this.component.getColumns()[columnIndex].config;
+        if (!fieldInfo.layout) {
+            console.warn('No layout found for field ' + columnIndex);
+            return;
+        }
+
+        if (fieldInfo.layout.noteditable) {
+            Ext.MessageBox.alert(t('error'), t('this_element_cannot_be_edited'));
+            return;
+        }
+
+        var tagType = fieldInfo.layout.fieldtype;
+        var editor = new pimcore.object.tags[tagType](null, fieldInfo.layout);
+        editor.updateContext({
+            containerType : 'batch'
+        });
+
+        var formPanel = Ext.create('Ext.form.Panel', {
+            xtype: 'form',
+            border: false,
+            items: [editor.getLayoutEdit()],
+            bodyStyle: 'padding: 10px;',
+            buttons: [
+                {
+                    text: t('save'),
+                    handler: function() {
+                        if (formPanel.isValid()) {
+                            this.batchProcess(editor, fieldInfo);
+                        }
+                    }.bind(this)
+                }
+            ]
+        });
+        var title = t('batch_edit_field') + " " + fieldInfo.text;
+        this.batchWindow = new Ext.Window({
+            autoScroll: true,
+            modal: false,
+            title: title,
+            items: [formPanel],
+            bodyStyle: 'background: #fff;',
+            width: 700,
+            maxHeight: 600
+        });
+        this.batchWindow.show();
+        this.batchWindow.updateLayout();
+    },
+
+    batchProcess: function (editor, fieldInfo) {
+        var selectedRows = this.component.getSelection();
+        for (var i = 0; i < selectedRows.length; i++) {
+            selectedRows[i].set(fieldInfo.dataIndex, editor.getValue());
+        }
+
+        this.batchWindow.close();
     },
 
     getLayoutEdit: function () {
