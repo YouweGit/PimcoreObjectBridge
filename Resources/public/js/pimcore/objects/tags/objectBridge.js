@@ -7,6 +7,7 @@ pimcore.object.tags.objectBridge = Class.create(pimcore.object.tags.objects, {
 
     type: "objectBridge",
     dataChanged: false,
+    batchWindow: null,
 
     initialize: function (data, fieldConfig) {
 
@@ -97,61 +98,77 @@ pimcore.object.tags.objectBridge = Class.create(pimcore.object.tags.objects, {
     getColumnFromLayout: function (classNameText, layout, readOnly, prefix) {
         var editor = null,
             renderer = null,
-            minWidth = 40;
+            minWidth = 40,
+            filter = {type: null};
 
         readOnly = (readOnly || layout.readOnly);
         prefix = ((prefix + ' ') || (''));
 
-        if (layout.fieldtype === "input" && !readOnly) {
-            editor = {
-                xtype: 'textfield',
-                allowBlank: !layout.mandatory
-            };
-            renderer = this.renderWithValidation;
-        }
-        else if (layout.fieldtype === "numeric" && !readOnly) {
-            renderer = this.renderWithValidation;
-            var decimalPrecision = Ext.isNumeric(this.fieldConfig.decimalPrecision) ? this.fieldConfig.decimalPrecision : 2;
-            editor = {
-                xtype: 'numberfield',
-                decimalPrecision: decimalPrecision,
-                allowBlank: !layout.mandatory
-            };
-        }
-        else if (layout.fieldtype === "checkbox") {
-            // There seems to be a problem with Ext checkbox column
-            // As a workaround we will skip the composition of the element and return
-            // it as soon as possible meaning all general stuff on bottom of
-            // this function will be passed directly to this column
+        switch (layout.fieldtype) {
+            case 'input':
+                if (readOnly) {
+                    break;
+                }
 
-            var checkBoxColumn = Ext.create('Ext.grid.column.Check', {
-                text: layout.title,
-                width: 40,
-                align: 'left',
-                hidden: !!layout.hidden,
-                sortable: true,
-                dataIndex: classNameText + '_' + layout.name
-            });
+                renderer = this.renderWithValidation;
+                filter.type = 'string';
 
-            if (readOnly) {
-                checkBoxColumn.setDisabled(true);
-            }
-            return checkBoxColumn;
-        }
+                editor = {
+                    xtype: 'textfield',
+                    allowBlank: !layout.mandatory
+                };
 
-        else if (layout.fieldtype === "select") {
-            renderer = this.renderDisplayField;
-            editor = Ext.create('Ext.form.ComboBox', {
-                allowBlank: !layout.mandatory,
-                typeAhead: true,
-                readOnly: readOnly,
-                forceSelection: true,
-                mode: 'local',
-                queryMode: 'local',
-                valueField: 'value',
-                displayField: 'key',
-                anyMatch: true,
-                store: Ext.create('Ext.data.JsonStore', {
+                break;
+
+            case 'numeric':
+                if (readOnly) {
+                    break;
+                }
+
+                renderer = this.renderWithValidation;
+                filter.type = 'number';
+                var decimalPrecision = Ext.isNumeric(this.fieldConfig.decimalPrecision) ? this.fieldConfig.decimalPrecision : 2;
+
+                editor = {
+                    xtype: 'numberfield',
+                    decimalPrecision: decimalPrecision,
+                    allowBlank: !layout.mandatory
+                };
+
+                break;
+
+            case 'checkbox':
+                // There seems to be a problem with Ext checkbox column
+                // As a workaround we will skip the composition of the element and return
+                // it as soon as possible meaning all general stuff on bottom of
+                // this function will be passed directly to this column
+
+                if (this.fieldConfig.enableFiltering) {
+                    filter.type = 'boolean';
+                } else {
+                    filter = null;
+                }
+
+                var checkBoxColumn = Ext.create('Ext.grid.column.Check', {
+                    text: layout.title,
+                    width: 40,
+                    align: 'left',
+                    hidden: !!layout.hidden,
+                    sortable: true,
+                    dataIndex: classNameText + '_' + layout.name,
+                    filter: filter,
+                    layout: layout
+                });
+
+                if (readOnly) {
+                    checkBoxColumn.setDisabled(true);
+                }
+
+                return checkBoxColumn;
+
+            case 'select':
+                renderer = this.renderDisplayField;
+                var store = Ext.create('Ext.data.JsonStore', {
                     proxy: {
                         type: 'memory',
                         reader: 'json'
@@ -159,83 +176,122 @@ pimcore.object.tags.objectBridge = Class.create(pimcore.object.tags.objects, {
                     idProperty: 'value',
                     fields: ['value', 'key'],
                     data: layout.options
-                })
-            });
+                });
 
-            // Todo: update, since href no longer exists
-        } else if ((layout.fieldtype === "href" || layout.fieldtype === "hrefTypeahead") && !readOnly) {
-            renderer = this.renderHrefWithValidation;
-            minWidth = 200;
-            editor = Ext.create('Ext.form.ComboBox', {
-                allowBlank: !layout.mandatory,
-                typeAhead: true,
-                forceSelection: false,
-                minChars: 2,
-                hideTrigger: true,
-                mode: 'remote',
-                queryMode: 'remote',
-                valueField: 'id',
-                displayField: 'display',
-                enableKeyEvents: true,
-                onFocus: function(e) {
-                    var me = this;
-                    me.setValue(null);
-                },
-                listeners : {
-                    keyup: function (e) {
-                        var pendingOperations = this.getStore().getProxy().pendingOperations;
-                        Ext.Object.eachValue(pendingOperations, function (pendingOperation) {
-                            pendingOperation.abort();
-                        });
-                    }
-                },
-                store: Ext.create('Ext.data.JsonStore', {
-                    autoLoad: false,
-                    remoteSort: true,
-                    pageSize: 10,
-                    proxy: {
-                        type: 'ajax',
-                        url: '/admin/href-typeahead/find',
-                        reader: {
-                            type: 'json',
-                            rootProperty: 'data'
-                        },
-                        extraParams: {
-                            fieldName: layout.name,
-                            className: classNameText
+                filter = {
+                    type: 'list',
+                    labelField: 'key',
+                    idField: 'value',
+                    options: store
+                };
+                editor = Ext.create('Ext.form.ComboBox', {
+                    allowBlank: !layout.mandatory,
+                    typeAhead: true,
+                    readOnly: readOnly,
+                    forceSelection: true,
+                    mode: 'local',
+                    queryMode: 'local',
+                    valueField: 'value',
+                    displayField: 'key',
+                    anyMatch: true,
+                    store: store
+                });
+
+                break;
+
+            case 'date':
+                if (readOnly) {
+                    break;
+                }
+
+                renderer = this.renderDate,
+                    editor = {
+                        xtype: 'datefield',
+                        format: 'm/d/Y',
+                        allowBlank: !layout.mandatory
+                    };
+                filter.type = 'date';
+
+                break;
+
+            case 'href':
+            case 'hrefTypeahead':
+                if (readOnly) {
+                    break;
+                }
+
+                renderer = this.renderHrefWithValidation;
+                minWidth = 200;
+                var showTrigger = (typeof layout.showTrigger !== 'undefined' && layout.showTrigger);
+
+                editor = Ext.create('Ext.form.ComboBox', {
+                    allowBlank: !layout.mandatory,
+                    typeAhead: true,
+                    forceSelection: false,
+                    minChars: 2,
+                    hideTrigger: !showTrigger,
+                    mode: 'remote',
+                    queryMode: 'remote',
+                    valueField: 'id',
+                    displayField: 'display',
+                    enableKeyEvents: true,
+                    onFocus: function(e) {
+                        var me = this;
+                        me.setValue(null);
+                    },
+                    listeners : {
+                        keyup: function (e) {
+                            var pendingOperations = this.getStore().getProxy().pendingOperations;
+                            Ext.Object.eachValue(pendingOperations, function (pendingOperation) {
+                                pendingOperation.abort();
+                            });
                         }
                     },
-                    fields: ['id', 'dest_id', 'display', 'type', 'subtype', 'path', 'fullpath']
-                })
-            });
-        } else if(layout.fieldtype === "date" && !readOnly) {
-            renderer = this.renderDate,
-                editor = {
-                    xtype: 'datefield',
-                    format: 'm/d/Y',
-                    allowBlank: !layout.mandatory
-                };
+                    store: Ext.create('Ext.data.JsonStore', {
+                        autoLoad: false,
+                        remoteSort: true,
+                        pageSize: 10,
+                        proxy: {
+                            type: 'ajax',
+                            url: '/admin/href-typeahead/find',
+                            reader: {
+                                type: 'json',
+                                rootProperty: 'data'
+                            },
+                            extraParams: {
+                                fieldName: layout.name,
+                                sourceId: this.object.id,
+                                className: classNameText
+                            }
+                        },
+                        fields: ['id', 'dest_id', 'display', 'type', 'subtype', 'path', 'fullpath']
+                    })
+                });
 
-        }
-        else {
-            // Ext.log(layout.fieldtype + ' is not implemented and will be read only');
+                break;
         }
 
-        //Bug fix for different title sizes (https://github.com/YouweGit/PimcoreObjectBridge/issues/8) still BC
-        var title = "";
-        if(prefix.length > 1){
+        // Bug fix for different title sizes (https://github.com/YouweGit/PimcoreObjectBridge/issues/8) still BC
+        var title = '';
+        if (prefix.length > 1){
             title = prefix + '<br/>' + layout.title;
-        }else{
+        } else{
             title = layout.title;
+        }
+
+        if (!this.fieldConfig.enableFiltering) {
+            filter = null;
         }
 
         var column = Ext.create('Ext.grid.column.Column', {
             text: title,
             dataIndex: classNameText + '_' + layout.name,
             editor: editor,
+            layout: layout,
             renderer: renderer,
             sortable: true,
-            minWidth: minWidth
+            minWidth: minWidth,
+            filter: filter
         });
 
         column.hidden = layout.hidden;
@@ -281,18 +337,24 @@ pimcore.object.tags.objectBridge = Class.create(pimcore.object.tags.objects, {
                 if (!sourceFieldLayout) {
                     throw new Error(sourceVisibleFields[i] + ' is missing from field definition, please add it under enrichLayoutDefinition at Pimcore\\Model\\Object\\ClassDefinition\\Data\\ObjectBridge');
                 }
-                columns.push(this.getColumnFromLayout(this.sourceClassName, sourceFieldLayout, true, this.fieldConfig.sourcePrefix));
+                columns.push(
+                    this.getColumnFromLayout(this.sourceClassName, sourceFieldLayout, true, this.fieldConfig.sourcePrefix)
+                );
             }
         }
 
+        var bridgeFieldDataIndices = [];
         for (i = 0; i < bridgeVisibleFields.length; i++) {
             if (!empty(bridgeVisibleFields[i]) && this.fieldConfig.bridgeVisibleFieldDefinitions !== null) {
                 var bridgeFieldLayout = this.fieldConfig.bridgeVisibleFieldDefinitions[bridgeVisibleFields[i]];
                 if (!bridgeFieldLayout) {
                     throw new Error(bridgeVisibleFields[i] + ' is missing from field definition, please add it under enrichLayoutDefinition at Pimcore\\Model\\Object\\ClassDefinition\\Data\\ObjectBridge');
                 }
-                var column = this.getColumnFromLayout(this.bridgeClassName, bridgeFieldLayout, readOnly, this.fieldConfig.bridgePrefix);
-                columns.push(column);
+                columns.push(
+                    this.getColumnFromLayout(this.bridgeClassName, bridgeFieldLayout, readOnly, this.fieldConfig.bridgePrefix)
+                );
+
+                bridgeFieldDataIndices.push(this.bridgeClassName + '_' + bridgeFieldLayout.name);
             }
         }
 
@@ -403,8 +465,14 @@ pimcore.object.tags.objectBridge = Class.create(pimcore.object.tags.objects, {
         var plugins = [
             Ext.create('Ext.grid.plugin.CellEditing', {
                 clicksToEdit: 1
-            }),'pimcore.gridfilters'
+            }),
+            'pimcore.gridfilters'
         ];
+
+        var selectionModel = 'Ext.selection.RowModel';
+        if (this.fieldConfig.enableBatchEdit) {
+            selectionModel = 'Ext.selection.CheckboxModel';
+        }
 
         this.component = Ext.create('Ext.grid.Panel', {
             store: this.store,
@@ -413,7 +481,7 @@ pimcore.object.tags.objectBridge = Class.create(pimcore.object.tags.objects, {
             enableDragDrop: true,
             ddGroup: 'element',
             trackMouseOver: true,
-            selModel: Ext.create('Ext.selection.RowModel', {}),
+            selModel: Ext.create(selectionModel, {}),
             columnLines: true,
             stripeRows: true,
             columns: columns,
@@ -440,6 +508,13 @@ pimcore.object.tags.objectBridge = Class.create(pimcore.object.tags.objects, {
         }
         if (this.fieldConfig.autoResize) {
             this.component.view.addListener('refresh', this.onRefreshComponent.bind(this));
+
+            // Trigger refresh to autoresize columns again after filtering
+            if (this.fieldConfig.enableFiltering) {
+                this.component.addListener('filterchange', function () {
+                    this.component.view.refresh();
+                }.bind(this));
+            }
         }
 
         this.component.reference = this;
@@ -452,7 +527,6 @@ pimcore.object.tags.objectBridge = Class.create(pimcore.object.tags.objects, {
                     ddGroup: 'element',
                     getTargetFromEvent: function (e) {
                         return this.component.getEl().dom;
-                        //return e.getTarget(this.grid.getView().rowSelector);
                     }.bind(this),
                     onNodeOver: function (overHtmlNode, ddSource, e, data) {
                         var record = data.records[0];
@@ -467,7 +541,6 @@ pimcore.object.tags.objectBridge = Class.create(pimcore.object.tags.objects, {
                     onNodeDrop: function (target, dd, e, data) {
 
                         var record = data.records[0];
-                        // var data = ;
                         var fromTree = this.isFromTree(dd);
 
                         if (this.dndAllowed(record.data, fromTree)) {
@@ -479,9 +552,97 @@ pimcore.object.tags.objectBridge = Class.create(pimcore.object.tags.objects, {
                         return false;
                     }.bind(this)
                 });
+
+                if (this.fieldConfig.enableBatchEdit) {
+                    // Add 'batch edit selected' menu item to column header menu
+                    var batchEditSelectedMenuItem = new Ext.menu.Item({
+                        text: t('batch_change_selected'),
+                        iconCls: "pimcore_icon_table pimcore_icon_overlay_go",
+                        handler: function (grid) {
+                            var menu = grid.headerCt.getMenu();
+                            var columnDataIndex = menu.activeHeader.fullColumnIndex;
+                            this.batchOpen(columnDataIndex);
+                        }.bind(this, this.component)
+                    });
+                    var menu = this.component.headerCt.getMenu();
+                    menu.add(batchEditSelectedMenuItem);
+
+                    // Only show batch edit for bridge data object columns and when at least 1 row is selected
+                    menu.on('beforeshow', function (batchEditSelectedMenuItem, grid) {
+                        var menu = grid.headerCt.getMenu();
+                        var columnDataIndex = menu.activeHeader.dataIndex;
+
+                        if (grid.getSelectionModel().hasSelection() && Ext.Array.contains(bridgeFieldDataIndices, columnDataIndex)) {
+                            batchEditSelectedMenuItem.show();
+                        } else {
+                            batchEditSelectedMenuItem.hide();
+                        }
+                    }.bind(this, batchEditSelectedMenuItem, this.component));
+                }
             }.bind(this));
         }
+
         return this.component;
+    },
+
+    /**
+     * @see pimcore.object.helpers.gridTabAbstract.batchOpen()
+     */
+    batchOpen: function (columnIndex) {
+        var fieldInfo = this.component.getColumns()[columnIndex].config;
+        if (!fieldInfo.layout) {
+            console.warn('No layout found for field ' + columnIndex);
+            return;
+        }
+
+        if (fieldInfo.layout.noteditable) {
+            Ext.MessageBox.alert(t('error'), t('this_element_cannot_be_edited'));
+            return;
+        }
+
+        var tagType = fieldInfo.layout.fieldtype;
+        var editor = new pimcore.object.tags[tagType](null, fieldInfo.layout);
+        editor.updateContext({
+            containerType : 'batch'
+        });
+
+        var formPanel = Ext.create('Ext.form.Panel', {
+            xtype: 'form',
+            border: false,
+            items: [editor.getLayoutEdit()],
+            bodyStyle: 'padding: 10px;',
+            buttons: [
+                {
+                    text: t('save'),
+                    handler: function() {
+                        if (formPanel.isValid()) {
+                            this.batchProcess(editor, fieldInfo);
+                        }
+                    }.bind(this)
+                }
+            ]
+        });
+        var title = t('batch_edit_field') + " " + fieldInfo.text;
+        this.batchWindow = new Ext.Window({
+            autoScroll: true,
+            modal: false,
+            title: title,
+            items: [formPanel],
+            bodyStyle: 'background: #fff;',
+            width: 700,
+            maxHeight: 600
+        });
+        this.batchWindow.show();
+        this.batchWindow.updateLayout();
+    },
+
+    batchProcess: function (editor, fieldInfo) {
+        var selectedRows = this.component.getSelection();
+        for (var i = 0; i < selectedRows.length; i++) {
+            selectedRows[i].set(fieldInfo.dataIndex, editor.getValue());
+        }
+
+        this.batchWindow.close();
     },
 
     getLayoutEdit: function () {
