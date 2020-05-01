@@ -366,7 +366,7 @@ pimcore.object.tags.objectBridge = Class.create(pimcore.object.tags.objects, {
                     items: [
                         {
                             tooltip: t('up'),
-                            icon: '/bundles/objectbridge/img/up.svg',
+                            icon: '/bundles/pimcoreadmin/img/flat-color-icons/up.svg',
                             handler: function (grid, rowIndex) {
                                 if (rowIndex > 0) {
                                     var rec = grid.getStore().getAt(rowIndex);
@@ -383,7 +383,7 @@ pimcore.object.tags.objectBridge = Class.create(pimcore.object.tags.objects, {
                     items: [
                         {
                             tooltip: t('down'),
-                            icon: '/bundles/objectbridge/img/down.svg',
+                            icon: '/bundles/pimcoreadmin/img/flat-color-icons/down.svg',
                             handler: function (grid, rowIndex) {
                                 if (rowIndex < (grid.getStore().getCount() - 1)) {
                                     var rec = grid.getStore().getAt(rowIndex);
@@ -403,10 +403,10 @@ pimcore.object.tags.objectBridge = Class.create(pimcore.object.tags.objects, {
             items: [
                 {
                     tooltip: t('open'),
-                    icon: '/bundles/objectbridge/img/cursor.svg',
+                    icon: '/bundles/pimcoreadmin/img/flat-color-icons/open_file.svg',
                     handler: function (grid, rowIndex) {
                         var data = grid.getStore().getAt(rowIndex);
-                        pimcore.helpers.openObject(data.data[this.sourceClassName + '_id'], 'object');
+                        pimcore.helpers.openObject(data.data[this.bridgeClassName + '_id'], 'object');
                     }.bind(this)
                 }
             ]
@@ -419,7 +419,7 @@ pimcore.object.tags.objectBridge = Class.create(pimcore.object.tags.objects, {
                 items: [
                     {
                         tooltip: t('remove'),
-                        icon: '/bundles/objectbridge/img/delete.svg',
+                        icon: '/bundles/pimcoreadmin/img/flat-color-icons/delete.svg',
                         handler: function (grid, rowIndex) {
                             grid.getStore().removeAt(rowIndex);
                         }.bind(this)
