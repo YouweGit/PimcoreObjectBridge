@@ -400,7 +400,6 @@ class ObjectBridge extends ClassDefinition\Data\Relations\AbstractRelations impl
                 }
                 $bridgeObject->setParent($parent);
                 $bridgeObject->setKey($this->bridgePrefix . $object->getId() . '_' . $sourceObject->getId());
-                $bridgeObject->setPublished(false);
                 // Make sure its unique else saving will throw an error
                 $bridgeObject->setKey(Model\DataObject\Service::getUniqueKey($bridgeObject));
             } else {
@@ -436,7 +435,7 @@ class ObjectBridge extends ClassDefinition\Data\Relations\AbstractRelations impl
 
             $bridgeObject->set($this->bridgeField, $sourceObject);
             $bridgeObject->setOmitMandatoryCheck(true);
-            $bridgeObject->setPublished($object->getPublished());
+            $bridgeObject->setPublished(true);
             $bridgeObject->save();
 
             if ($bridgeObject && $bridgeObject->getClassName() === $this->getBridgeAllowedClassName()) {
@@ -1543,17 +1542,6 @@ class ObjectBridge extends ClassDefinition\Data\Relations\AbstractRelations impl
             $data = $object->getObjectVar($this->getName());
         } elseif ($object instanceof DataObject\Objectbrick\Data\AbstractData) {
             $data = $object->getObjectVar($this->getName());
-        }
-
-        if (DataObject\AbstractObject::doHideUnpublished() && is_array($data)) {
-            $publishedList = [];
-            foreach ($data as $listElement) {
-                if (Element\Service::isPublished($listElement)) {
-                    $publishedList[] = $listElement;
-                }
-            }
-
-            return $publishedList;
         }
 
         return is_array($data) ? $data : [];
