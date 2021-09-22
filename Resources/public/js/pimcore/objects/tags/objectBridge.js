@@ -402,8 +402,23 @@ pimcore.object.tags.objectBridge = Class.create(pimcore.object.tags.objects, {
             width: 40,
             items: [
                 {
-                    tooltip: t('open'),
+                    tooltip: t('open') + ' ' + this.sourceClassName,
                     icon: '/bundles/pimcoreadmin/img/flat-color-icons/open_file.svg',
+                    handler: function (grid, rowIndex) {
+                        var data = grid.getStore().getAt(rowIndex);
+                        pimcore.helpers.openObject(data.data[this.sourceClassName + '_id'], 'object');
+                    }.bind(this)
+                }
+            ]
+        });
+
+        columns.push({
+            xtype: 'actioncolumn',
+            width: 40,
+            items: [
+                {
+                    tooltip: t('open') + ' ' + this.bridgeClassName,
+                    icon: '/bundles/pimcoreadmin/img/flat-color-icons/tree_structure.svg',
                     handler: function (grid, rowIndex) {
                         var data = grid.getStore().getAt(rowIndex);
                         pimcore.helpers.openObject(data.data[this.bridgeClassName + '_id'], 'object');
