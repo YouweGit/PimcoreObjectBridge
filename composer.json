@@ -32,5 +32,6 @@
         "ObjectBridgeBundle\\ObjectBridgeBundle"
       ]
     }
-  }
+  },
+  "abandoned": "https://pimcore.com/docs/pimcore/current/Development_Documentation/Objects/Object_Classes/Data_Types/Relation_Types.html#page_Advanced-Many-To-One-Object-Relation"
 }
