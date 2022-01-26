@@ -1,3 +1,7 @@
+# Abandoned
+
+Use [advanced many to one object relation](https://pimcore.com/docs/pimcore/current/Development_Documentation/Objects/Object_Classes/Data_Types/Relation_Types.html#page_Advanced-Many-To-One-Object-Relation) instead.
+
 # Object bridge field
 
 Allows editing an object inline that doesn't link directly many-to-many like
