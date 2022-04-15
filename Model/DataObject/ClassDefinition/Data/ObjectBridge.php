@@ -645,7 +645,7 @@ class ObjectBridge extends ClassDefinition\Data\Relations\AbstractRelations impl
      * @param bool $omitMandatoryCheck
      * @throws \Exception
      */
-    public function checkValidity($data, $omitMandatoryCheck = false)
+    public function checkValidity($data, $omitMandatoryCheck = false, $params = [])
     {
         if (!$omitMandatoryCheck && $this->getMandatory() && empty($data)) {
             throw new Element\ValidationException(
