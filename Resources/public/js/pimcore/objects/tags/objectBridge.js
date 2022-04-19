@@ -3,7 +3,7 @@
 // Ext.define(
 
 pimcore.registerNS("pimcore.object.tags.objectBridge");
-pimcore.object.tags.objectBridge = Class.create(pimcore.object.tags.objects, {
+pimcore.object.tags.objectBridge = Class.create(pimcore.object.tags.manyToManyObjectRelation, {
 
     type: "objectBridge",
     dataChanged: false,
