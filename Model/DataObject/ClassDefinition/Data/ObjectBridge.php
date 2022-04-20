@@ -963,7 +963,7 @@ class ObjectBridge extends ClassDefinition\Data\Relations\AbstractRelations impl
             // Fallback to localized fields
             $fieldFound = false;
             /** @var ClassDefinition $localizedfields */
-            if ($localizedfields = $sourceClass->getFieldDefinitions()['localizedfields']) {
+            if ($localizedfields = $sourceClass->getFieldDefinitions()['localizedfields'] ?? null) {
                 /**
                  * @var ClassDefinition\Data $fieldDefinition
                  */
