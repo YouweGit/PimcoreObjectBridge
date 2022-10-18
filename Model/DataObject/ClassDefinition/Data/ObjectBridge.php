@@ -544,7 +544,7 @@ class ObjectBridge extends ClassDefinition\Data\Relations\AbstractRelations impl
         $db = Db::get();
         $select = $db->select()
             ->from(['dor' => 'object_relations_' . $object::classId()], [])
-            ->joinInner(['dp_objects' => 'object_' . $bridgeClass::classId()], 'dor.dest_id = dp_objects.oo_id', ['oo_id'])
+            ->joinInner(['dp_objects' => 'object_' . $bridgeClass::classId()], 'dor.dest_id = dp_objects.oo_id AND dor.type = "object"', ['oo_id'])
             ->where('dor.src_id = ?', $object->getId())
             ->where('dp_objects.' . $this->bridgeField . '__id = ?', $sourceId);
 
