@@ -3,7 +3,7 @@
   "description": "Allows editing an object inline that doesn't link directly many-to-many like",
   "type": "pimcore-bundle",
   "require": {
-    "pimcore/pimcore": ">=5.6.0"
+    "pimcore/pimcore": "^10.5"
   },
   "license": "MIT",
   "authors": [

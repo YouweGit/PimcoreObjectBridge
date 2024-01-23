@@ -382,7 +382,7 @@ class ObjectBridge extends ClassDefinition\Data\Relations\AbstractRelations impl
         /** @var AbstractObject|string $bridgeClass */
         $bridgeClass = $this->getBridgeFullClassName();
         $idSourceFieldKey = $sourceClassDef->getName() . '_id';
-
+        
         foreach ($data as $objectData) {
             $sourceId = $objectData[$idSourceFieldKey];
             $bridgeObjectId = $this->getBridgeIdBySourceAndOwner($object, $bridgeClass, $sourceId);
@@ -542,11 +542,13 @@ class ObjectBridge extends ClassDefinition\Data\Relations\AbstractRelations impl
     private function getBridgeIdBySourceAndOwner($object, $bridgeClass, $sourceId)
     {
         $db = Db::get();
-        $select = $db->select()
-            ->from(['dor' => 'object_relations_' . $object::classId()], [])
-            ->joinInner(['dp_objects' => 'object_' . $bridgeClass::classId()], 'dor.dest_id = dp_objects.oo_id', ['oo_id'])
-            ->where('dor.src_id = ?', $object->getId())
-            ->where('dp_objects.' . $this->bridgeField . '__id = ?', $sourceId);
+        $select = $db->createQueryBuilder()
+            ->select("dp_objects.oo_id")
+            ->from('object_relations_' . $object::classId(), 'dor')
+            ->innerJoin('dor', 'object_' . $bridgeClass::classId(), 'dp_objects', 'dor.dest_id = dp_objects.oo_id AND dor.type = "object"')
+            // ->joinInner(['dp_objects' => 'object_' . $bridgeClass::classId()], 'dor.dest_id = dp_objects.oo_id AND dor.type = "object"', ['oo_id'])
+            ->where('dor.src_id = ' . $object->getId())
+            ->andWhere('dp_objects.' . $this->bridgeField . '__id = ' . $sourceId);
 
 
         $stmt = $db->query($select);
@@ -920,7 +922,6 @@ class ObjectBridge extends ClassDefinition\Data\Relations\AbstractRelations impl
         $this->bridgeAllowedClassName = $masterDefinition->bridgeAllowedClassName;
         $this->bridgeVisibleFields = $masterDefinition->bridgeVisibleFields;
         $this->sourceHiddenFields = $masterDefinition->sourceHiddenFields;
-        $this->bridgeVisibleFields = $masterDefinition->bridgeVisibleFields;
         $this->bridgeHiddenFields = $masterDefinition->bridgeHiddenFields;
         $this->bridgeField = $masterDefinition->bridgeField;
         $this->bridgeFolder = $masterDefinition->bridgeFolder;
