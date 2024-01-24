@@ -542,6 +542,7 @@ class ObjectBridge extends ClassDefinition\Data\Relations\AbstractRelations impl
     private function getBridgeIdBySourceAndOwner($object, $bridgeClass, $sourceId)
     {
         $db = Db::get();
+
         $select = $db->createQueryBuilder()
             ->select("dp_objects.oo_id")
             ->from('object_relations_' . $object::classId(), 'dor')
@@ -550,10 +551,7 @@ class ObjectBridge extends ClassDefinition\Data\Relations\AbstractRelations impl
             ->where('dor.src_id = ' . $object->getId())
             ->andWhere('dp_objects.' . $this->bridgeField . '__id = ' . $sourceId);
 
-
-        $stmt = $db->query($select);
-
-        return $stmt->fetch(PDO::FETCH_COLUMN, 0);
+        return $select->execute()->fetchOne();
     }
 
     /**
