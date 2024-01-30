@@ -382,26 +382,34 @@ class ObjectBridge extends ClassDefinition\Data\Relations\AbstractRelations impl
         /** @var AbstractObject|string $bridgeClass */
         $bridgeClass = $this->getBridgeFullClassName();
         $idSourceFieldKey = $sourceClassDef->getName() . '_id';
-
+        
         foreach ($data as $objectData) {
             $sourceId = $objectData[$idSourceFieldKey];
             $bridgeObjectId = $this->getBridgeIdBySourceAndOwner($object, $bridgeClass, $sourceId);
 
             $sourceObject = $sourceClass::getById($sourceId);
+            // If there is no id check for existing key instead. This is to prevent creating multiple versions of the same bridge object.
             /** @var Concrete $bridgeObject */
             if (!$bridgeObjectId) {
-                $bridgeObject = new $bridgeClass;
-                $parent = Model\DataObject\Service::createFolderByPath($this->bridgeFolder);
-                if (!$parent instanceof AbstractObject) {
-                    throw new \InvalidArgumentException(
-                        sprintf('Parent not found at "%s" please check your object bridge configuration "Bridge folder"', $this->bridgeFolder),
-                        1574671788
-                    );
+                $key = $this->bridgePrefix . $object->getId() . '_' . $sourceObject->getId();
+                $existingBridgeObject = $bridgeClass::getByKey($key)->getObjects();
+
+                if (!empty($existingBridgeObject)) {
+                    $bridgeObject = $existingBridgeObject[0];
+                } else {
+                    $bridgeObject = new $bridgeClass;
+                    $parent = Model\DataObject\Service::createFolderByPath($this->bridgeFolder);
+                    if (!$parent instanceof AbstractObject) {
+                        throw new \InvalidArgumentException(
+                            sprintf('Parent not found at "%s" please check your object bridge configuration "Bridge folder"', $this->bridgeFolder),
+                            1574671788
+                        );
+                    }
+                    $bridgeObject->setParent($parent);
+                    $bridgeObject->setKey($this->bridgePrefix . $object->getId() . '_' . $sourceObject->getId());
+                    // Make sure its unique else saving will throw an error
+                    $bridgeObject->setKey(Model\DataObject\Service::getUniqueKey($bridgeObject));
                 }
-                $bridgeObject->setParent($parent);
-                $bridgeObject->setKey($this->bridgePrefix . $object->getId() . '_' . $sourceObject->getId());
-                // Make sure its unique else saving will throw an error
-                $bridgeObject->setKey(Model\DataObject\Service::getUniqueKey($bridgeObject));
             } else {
                 $bridgeObject = $bridgeClass::getById($bridgeObjectId);
             }
@@ -542,16 +550,16 @@ class ObjectBridge extends ClassDefinition\Data\Relations\AbstractRelations impl
     private function getBridgeIdBySourceAndOwner($object, $bridgeClass, $sourceId)
     {
         $db = Db::get();
-        $select = $db->select()
-            ->from(['dor' => 'object_relations_' . $object::classId()], [])
-            ->joinInner(['dp_objects' => 'object_' . $bridgeClass::classId()], 'dor.dest_id = dp_objects.oo_id AND dor.type = "object"', ['oo_id'])
-            ->where('dor.src_id = ?', $object->getId())
-            ->where('dp_objects.' . $this->bridgeField . '__id = ?', $sourceId);
 
+        $select = $db->createQueryBuilder()
+            ->select("dp_objects.oo_id")
+            ->from('object_relations_' . $object::classId(), 'dor')
+            ->innerJoin('dor', 'object_' . $bridgeClass::classId(), 'dp_objects', 'dor.dest_id = dp_objects.oo_id AND dor.type = "object"')
+            // ->joinInner(['dp_objects' => 'object_' . $bridgeClass::classId()], 'dor.dest_id = dp_objects.oo_id AND dor.type = "object"', ['oo_id'])
+            ->where('dor.src_id = ' . $object->getId())
+            ->andWhere('dp_objects.' . $this->bridgeField . '__id = ' . $sourceId);
 
-        $stmt = $db->query($select);
-
-        return $stmt->fetch(PDO::FETCH_COLUMN, 0);
+        return $select->execute()->fetchOne();
     }
 
     /**
@@ -660,6 +668,9 @@ class ObjectBridge extends ClassDefinition\Data\Relations\AbstractRelations impl
 
         /** @var Concrete $objectBridge */
         foreach ($data as $objectBridge) {
+            if (!$objectBridge) {
+                continue;
+            }
             $bridgeClassFullName = $this->getBridgeFullClassName();
             if (!($objectBridge instanceof $bridgeClassFullName)) {
                 throw new Element\ValidationException('Expected ' . $bridgeClassFullName, 1574671790);
@@ -920,7 +931,6 @@ class ObjectBridge extends ClassDefinition\Data\Relations\AbstractRelations impl
         $this->bridgeAllowedClassName = $masterDefinition->bridgeAllowedClassName;
         $this->bridgeVisibleFields = $masterDefinition->bridgeVisibleFields;
         $this->sourceHiddenFields = $masterDefinition->sourceHiddenFields;
-        $this->bridgeVisibleFields = $masterDefinition->bridgeVisibleFields;
         $this->bridgeHiddenFields = $masterDefinition->bridgeHiddenFields;
         $this->bridgeField = $masterDefinition->bridgeField;
         $this->bridgeFolder = $masterDefinition->bridgeFolder;
