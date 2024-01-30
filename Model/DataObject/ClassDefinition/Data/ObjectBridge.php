@@ -388,20 +388,28 @@ class ObjectBridge extends ClassDefinition\Data\Relations\AbstractRelations impl
             $bridgeObjectId = $this->getBridgeIdBySourceAndOwner($object, $bridgeClass, $sourceId);
 
             $sourceObject = $sourceClass::getById($sourceId);
+            // If there is no id check for existing key instead. This is to prevent creating multiple versions of the same bridge object.
             /** @var Concrete $bridgeObject */
             if (!$bridgeObjectId) {
-                $bridgeObject = new $bridgeClass;
-                $parent = Model\DataObject\Service::createFolderByPath($this->bridgeFolder);
-                if (!$parent instanceof AbstractObject) {
-                    throw new \InvalidArgumentException(
-                        sprintf('Parent not found at "%s" please check your object bridge configuration "Bridge folder"', $this->bridgeFolder),
-                        1574671788
-                    );
+                $key = $this->bridgePrefix . $object->getId() . '_' . $sourceObject->getId();
+                $existingBridgeObject = $bridgeClass::getByKey($key)->getObjects();
+
+                if (!empty($existingBridgeObject)) {
+                    $bridgeObject = $existingBridgeObject[0];
+                } else {
+                    $bridgeObject = new $bridgeClass;
+                    $parent = Model\DataObject\Service::createFolderByPath($this->bridgeFolder);
+                    if (!$parent instanceof AbstractObject) {
+                        throw new \InvalidArgumentException(
+                            sprintf('Parent not found at "%s" please check your object bridge configuration "Bridge folder"', $this->bridgeFolder),
+                            1574671788
+                        );
+                    }
+                    $bridgeObject->setParent($parent);
+                    $bridgeObject->setKey($this->bridgePrefix . $object->getId() . '_' . $sourceObject->getId());
+                    // Make sure its unique else saving will throw an error
+                    $bridgeObject->setKey(Model\DataObject\Service::getUniqueKey($bridgeObject));
                 }
-                $bridgeObject->setParent($parent);
-                $bridgeObject->setKey($this->bridgePrefix . $object->getId() . '_' . $sourceObject->getId());
-                // Make sure its unique else saving will throw an error
-                $bridgeObject->setKey(Model\DataObject\Service::getUniqueKey($bridgeObject));
             } else {
                 $bridgeObject = $bridgeClass::getById($bridgeObjectId);
             }
@@ -660,6 +668,9 @@ class ObjectBridge extends ClassDefinition\Data\Relations\AbstractRelations impl
 
         /** @var Concrete $objectBridge */
         foreach ($data as $objectBridge) {
+            if (!$objectBridge) {
+                continue;
+            }
             $bridgeClassFullName = $this->getBridgeFullClassName();
             if (!($objectBridge instanceof $bridgeClassFullName)) {
                 throw new Element\ValidationException('Expected ' . $bridgeClassFullName, 1574671790);
